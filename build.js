@@ -48,7 +48,7 @@ async function build() {
     (f) => f.endsWith(".html") && f !== "template.html",
   );
   const jsFiles = allFiles.filter(
-    (f) => f.endsWith(".js") && f !== "build.js",
+    (f) => f.endsWith(".js") && f !== "build.js" && f !== "worker.js",
   );
 
   // 3. Minify JS

@@ -1,15 +1,47 @@
-# 类似 Trello 的加密币的价格看板
+# Token Panel
 
-## 基于 Cloudflare Workers 和 Cloudflare KV 实现
+类似 Trello 的加密币价格看板，基于 Cloudflare Workers + KV 实现。
 
-- 配置项提取出一个变量，比如价格的缓存时间等
-- KV 中存储 group: [{index:1, name: "持仓", coins:['BTC','ETH']},{index:0, name: "关注",coins:['BTC','SOL','ASTER']}]
-- KV 中缓存根据 group的coins去重后在 livecoinwatch中通过/coins/map获取的结果缓存
+## 功能
 
-## 需求
+- 多个自定义看板，每个看板可添加任意代币
+- 每个代币展示实时价格、24h 涨跌幅、市值
+- 价格数据每 5 分钟自动刷新（由后端缓存，减少 API 调用）
+- 所有配置持久化在 Cloudflare KV
 
-- 前端有多个类似任务看板的价格，每个看板可自定义看板名字，可以自定义添加代币，通过 [livecoinwatch 获取](https://livecoinwatch.github.io/lcw-api-docs/#coinsmap)
+## 技术栈
 
-## 参考
+| 层级 | 技术 |
+|------|------|
+| 托管 | Cloudflare Workers + Assets |
+| 存储 | Cloudflare KV |
+| 价格数据 | [livecoinwatch API](https://livecoinwatch.github.io/lcw-api-docs/#coinsmap) |
+| 前端 | Alpine.js 3 + DaisyUI 5 + Tailwind CSS 4 |
+| 构建 | Node.js (terser + html-minifier-terser) |
 
-- livecoinwatch 文档 https://livecoinwatch.github.io/lcw-api-docs/#coinsmap
+## 本地开发
+
+1. 安装依赖：`npm install`
+2. 创建 KV namespace（首次）：见 `docs/plans/2026-02-21-token-panel-implementation.md` Task 1
+3. 设置 livecoinwatch API key：在 `.dev.vars` 写入 `LCW_API_KEY=your_key`
+4. 启动本地开发服务器：`npx wrangler dev`
+5. 访问 http://localhost:8787
+
+## 构建与部署
+
+```bash
+npm run build          # 生成 dist/
+npx wrangler deploy    # 部署到 Cloudflare
+```
+
+## API
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/groups | 获取所有看板组 |
+| PUT | /api/groups | 全量更新看板组 |
+| GET | /api/prices | 获取所有已追踪代币的实时价格 |
+
+## 设计文档
+
+见 `docs/plans/2026-02-21-token-panel-design.md`
