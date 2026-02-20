@@ -1,7 +1,15 @@
 {
   "name": "token-panel",
   "compatibility_date": "2026-01-19",
+  "main": "worker.js",
   "assets": {
     "directory": "./dist"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID",
+      "preview_id": "REPLACE_WITH_YOUR_KV_PREVIEW_ID"
+    }
+  ]
 }
