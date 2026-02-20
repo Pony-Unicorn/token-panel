@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page title</title>
+
+    <!-- 1. DaisyUI CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@5"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+
+    <!-- 2. Tailwind -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- 3. Alpine.js (plugins must be loaded before the core) -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/@alpinejs/mask@3.15.8/dist/cdn.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js"
+    ></script>
+
+    <!-- 4. Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@3.0.0/dist/iconify-icon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.13.5/dist/axios.min.js"></script>
+
+    <!-- 5. Shared -->
+    <script src="./shared.js"></script>
+  </head>
+  <body class="min-h-screen bg-base-200">
+    <!-- featurePage must match the Alpine.data name below -->
+    <div x-data="featurePage">
+      <!-- Content -->
+      <main class="p-6"></main>
+
+      <!-- Modal example (remove if not needed)
+      <button class="btn" @click="$refs.myModal.showModal()">open modal</button>
+      <dialog x-ref="myModal" class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold">Title</h3>
+          <p class="py-4">Content</p>
+          <div class="modal-action">
+            <form method="dialog">
+              <button class="btn">Close</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+      -->
+
+      <!-- Toast (do not remove) -->
+      <div class="toast toast-top toast-center">
+        <template x-for="t in $store.toast.items" :key="t.id">
+          <div x-transition :class="'alert alert-' + t.type">
+            <span x-text="t.message"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("featurePage", () => ({
+          // -- State --
+          isLoading: false,
+
+          // -- Lifecycle --
+          async init() {
+            this.isLoading = true;
+            try {
+              // Load initial data
+            } catch (e) {
+              console.error(e);
+            } finally {
+              this.isLoading = false;
+            }
+          },
+
+          // -- Methods --
+        }));
+      });
+    </script>
+  </body>
+</html>
