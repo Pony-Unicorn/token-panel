@@ -19,7 +19,15 @@ export default {
 
     // PUT /api/groups — full replace
     if (pathname === "/api/groups" && method === "PUT") {
-      const groups = await request.json();
+      let groups;
+      try {
+        groups = await request.json();
+      } catch {
+        return json({ error: "Invalid JSON" }, 400);
+      }
+      if (!Array.isArray(groups)) {
+        return json({ error: "Body must be an array" }, 400);
+      }
       await env.KV.put("groups", JSON.stringify(groups));
       await env.KV.delete("prices_cache"); // invalidate so next fetch is fresh
       return json({ ok: true });

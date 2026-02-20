@@ -218,7 +218,13 @@
           },
 
           async saveGroups() {
-            await groupApi.update(this.groups);
+            try {
+              await groupApi.update(this.groups);
+            } catch (e) {
+              toast("保存失败，请重试", "error");
+              await this.loadData(); // re-sync with server
+              throw e;
+            }
           },
 
           // --- Group actions ---
@@ -274,6 +280,7 @@
               await this.refreshPrices();
             } else {
               this.$refs.coinModal.close();
+              if (g) toast("该代币已在看板中", "warning");
             }
           },
 
