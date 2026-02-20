@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Token Panel</title>
+
+    <!-- DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+
+    <!-- Tailwind -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js"></script>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@3.0.0/dist/iconify-icon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.13.5/dist/axios.min.js"></script>
+
+    <!-- Shared -->
+    <script src="./shared.js"></script>
+  </head>
+  <body class="min-h-screen bg-base-200">
+    <div x-data="tokenPanel">
+
+      <!-- Navbar -->
+      <div class="navbar bg-base-100 shadow-sm px-6 sticky top-0 z-10">
+        <div class="flex-1 gap-3">
+          <span class="text-xl font-bold">Token Panel</span>
+          <span x-show="lastUpdatedText" x-text="lastUpdatedText"
+                class="text-xs text-base-content/40"></span>
+        </div>
+        <div class="flex-none">
+          <button class="btn btn-primary btn-sm" @click="openNewGroup()">
+            <iconify-icon icon="mdi:plus" width="16"></iconify-icon>
+            新建看板
+          </button>
+        </div>
+      </div>
+
+      <!-- Boards -->
+      <div class="flex gap-4 p-6 overflow-x-auto items-start min-h-[calc(100vh-64px)]">
+
+        <!-- Loading -->
+        <template x-if="isLoading && groups.length === 0">
+          <div class="flex items-center justify-center w-full h-64">
+            <span class="loading loading-spinner loading-lg"></span>
+          </div>
+        </template>
+
+        <!-- Empty state -->
+        <template x-if="!isLoading && groups.length === 0">
+          <div class="flex flex-col items-center justify-center w-full h-64 gap-3 text-base-content/40">
+            <iconify-icon icon="mdi:view-dashboard-outline" width="48"></iconify-icon>
+            <p>还没有看板，点击右上角新建看板开始</p>
+          </div>
+        </template>
+
+        <!-- Board columns -->
+        <template x-for="group in groups" :key="group.id">
+          <div class="card bg-base-100 shadow w-72 flex-shrink-0">
+            <div class="card-body p-4 gap-3">
+
+              <!-- Board header -->
+              <div class="flex items-center justify-between">
+                <h2 class="font-bold text-base truncate" x-text="group.name"></h2>
+                <div class="flex gap-1 flex-shrink-0">
+                  <button class="btn btn-ghost btn-xs" @click="openEditGroup(group)"
+                          title="重命名">
+                    <iconify-icon icon="mdi:pencil-outline" width="14"></iconify-icon>
+                  </button>
+                  <button class="btn btn-ghost btn-xs text-error" @click="deleteGroup(group.id)"
+                          title="删除看板">
+                    <iconify-icon icon="mdi:delete-outline" width="14"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Token cards -->
+              <div class="flex flex-col gap-2">
+                <template x-for="coin in group.coins" :key="coin">
+                  <div class="bg-base-200 rounded-xl p-3 relative group/card">
+                    <button
+                      class="btn btn-ghost btn-xs absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity"
+                      @click="removeCoin(group.id, coin)" title="移除">
+                      <iconify-icon icon="mdi:close" width="12"></iconify-icon>
+                    </button>
+
+                    <div class="font-bold text-sm mb-1" x-text="coin"></div>
+
+                    <template x-if="prices[coin]">
+                      <div>
+                        <div class="text-lg font-mono font-semibold"
+                             x-text="formatPrice(prices[coin].price)"></div>
+                        <div class="flex items-center justify-between text-xs mt-1">
+                          <span :class="deltaClass(prices[coin].delta_24h)"
+                                x-text="formatDelta(prices[coin].delta_24h)"></span>
+                          <span class="text-base-content/50"
+                                x-text="formatMarketCap(prices[coin].market_cap)"></span>
+                        </div>
+                      </div>
+                    </template>
+                    <template x-if="!prices[coin]">
+                      <div class="text-xs text-base-content/30">暂无数据</div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Add coin -->
+              <button class="btn btn-ghost btn-sm w-full text-base-content/50"
+                      @click="openAddCoin(group.id)">
+                <iconify-icon icon="mdi:plus" width="16"></iconify-icon>
+                添加代币
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Group modal (new / edit) -->
+      <dialog x-ref="groupModal" class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold mb-4"
+              x-text="groupModal.isEdit ? '修改看板名称' : '新建看板'"></h3>
+          <input type="text" class="input input-bordered w-full"
+                 placeholder="看板名称"
+                 x-model="groupModal.name"
+                 @keydown.enter="confirmGroup()" />
+          <div class="modal-action">
+            <button class="btn btn-ghost"
+                    @click="$refs.groupModal.close()">取消</button>
+            <button class="btn btn-primary" @click="confirmGroup()">确认</button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      <!-- Add coin modal -->
+      <dialog x-ref="coinModal" class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold mb-4">添加代币</h3>
+          <input type="text" class="input input-bordered w-full"
+                 placeholder="代币符号，如 BTC、ETH、SOL"
+                 x-model="coinModal.symbol"
+                 @keydown.enter="confirmCoin()" />
+          <div class="modal-action">
+            <button class="btn btn-ghost"
+                    @click="$refs.coinModal.close()">取消</button>
+            <button class="btn btn-primary" @click="confirmCoin()">确认</button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
+      <!-- Toast -->
+      <div class="toast toast-top toast-center z-50">
+        <template x-for="t in $store.toast.items" :key="t.id">
+          <div x-transition :class="'alert alert-' + t.type">
+            <span x-text="t.message"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("tokenPanel", () => ({
+          groups: [],
+          prices: {},
+          lastUpdated: null,
+          isLoading: false,
+
+          groupModal: { isEdit: false, id: null, name: "" },
+          coinModal: { groupId: null, symbol: "" },
+
+          async init() {
+            await this.loadData();
+            setInterval(() => this.refreshPrices(), 5 * 60 * 1000);
+          },
+
+          async loadData() {
+            this.isLoading = true;
+            try {
+              const [groups, priceResult] = await Promise.all([
+                groupApi.getAll(),
+                priceApi.getAll(),
+              ]);
+              this.groups = groups;
+              this.prices = priceResult.data;
+              this.lastUpdated = priceResult.updatedAt
+                ? new Date(priceResult.updatedAt)
+                : null;
+            } catch (e) {
+              toast("加载失败", "error");
+            } finally {
+              this.isLoading = false;
+            }
+          },
+
+          async refreshPrices() {
+            try {
+              const priceResult = await priceApi.getAll();
+              this.prices = priceResult.data;
+              this.lastUpdated = priceResult.updatedAt
+                ? new Date(priceResult.updatedAt)
+                : null;
+            } catch (e) {
+              toast("价格更新失败", "error");
+            }
+          },
+
+          async saveGroups() {
+            await groupApi.update(this.groups);
+          },
+
+          // --- Group actions ---
+
+          openNewGroup() {
+            this.groupModal = { isEdit: false, id: null, name: "" };
+            this.$refs.groupModal.showModal();
+          },
+
+          openEditGroup(group) {
+            this.groupModal = { isEdit: true, id: group.id, name: group.name };
+            this.$refs.groupModal.showModal();
+          },
+
+          async confirmGroup() {
+            const name = this.groupModal.name.trim();
+            if (!name) return;
+            if (this.groupModal.isEdit) {
+              const g = this.groups.find((g) => g.id === this.groupModal.id);
+              if (g) g.name = name;
+            } else {
+              this.groups.push({
+                id: crypto.randomUUID(),
+                name,
+                coins: [],
+              });
+            }
+            this.$refs.groupModal.close();
+            await this.saveGroups();
+          },
+
+          async deleteGroup(id) {
+            if (!confirm("确认删除该看板？")) return;
+            this.groups = this.groups.filter((g) => g.id !== id);
+            await this.saveGroups();
+          },
+
+          // --- Coin actions ---
+
+          openAddCoin(groupId) {
+            this.coinModal = { groupId, symbol: "" };
+            this.$refs.coinModal.showModal();
+          },
+
+          async confirmCoin() {
+            const symbol = this.coinModal.symbol.trim().toUpperCase();
+            if (!symbol) return;
+            const g = this.groups.find((g) => g.id === this.coinModal.groupId);
+            if (g && !g.coins.includes(symbol)) {
+              g.coins.push(symbol);
+              this.$refs.coinModal.close();
+              await this.saveGroups();
+              await this.refreshPrices();
+            } else {
+              this.$refs.coinModal.close();
+            }
+          },
+
+          async removeCoin(groupId, symbol) {
+            const g = this.groups.find((g) => g.id === groupId);
+            if (!g) return;
+            g.coins = g.coins.filter((c) => c !== symbol);
+            await this.saveGroups();
+          },
+
+          // --- Formatting ---
+
+          formatPrice(price) {
+            if (price >= 1) {
+              return (
+                "$" +
+                price.toLocaleString("en-US", { maximumFractionDigits: 2 })
+              );
+            }
+            return "$" + price.toPrecision(4);
+          },
+
+          formatDelta(delta) {
+            const pct = (delta * 100).toFixed(2);
+            return (delta >= 0 ? "+" : "") + pct + "%";
+          },
+
+          deltaClass(delta) {
+            return delta >= 0 ? "text-success" : "text-error";
+          },
+
+          formatMarketCap(cap) {
+            if (!cap) return "—";
+            if (cap >= 1e12) return (cap / 1e12).toFixed(2) + "T";
+            if (cap >= 1e9) return (cap / 1e9).toFixed(2) + "B";
+            if (cap >= 1e6) return (cap / 1e6).toFixed(2) + "M";
+            return cap.toLocaleString("en-US");
+          },
+
+          get lastUpdatedText() {
+            if (!this.lastUpdated) return "";
+            return (
+              "更新于 " +
+              dayjs(this.lastUpdated).format("HH:mm:ss")
+            );
+          },
+        }));
+      });
+    </script>
+  </body>
+</html>
