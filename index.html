@@ -476,10 +476,11 @@
           },
 
           async confirmDelete() {
-            this.$refs.confirmModal.close();
+            if (!this.confirmDeleteModal.groupId) return;
             this.groups = this.groups.filter(
               (g) => g.id !== this.confirmDeleteModal.groupId,
             );
+            this.$refs.confirmModal.close();
             await this.saveGroups();
           },
 
