@@ -266,7 +266,8 @@
             <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.groupModal.close()">
               取消
             </button>
-            <button class="btn btn-primary" :disabled="isSaving" :class="{ 'loading': isSaving }" @click="confirmGroup()">
+            <button class="btn btn-primary" :disabled="isSaving" @click="confirmGroup()">
+              <span x-show="isSaving" class="loading loading-spinner loading-sm"></span>
               确认
             </button>
           </div>
@@ -291,7 +292,8 @@
             <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.coinModal.close()">
               取消
             </button>
-            <button class="btn btn-primary" :disabled="isSaving" :class="{ 'loading': isSaving }" @click="confirmCoin()">
+            <button class="btn btn-primary" :disabled="isSaving" @click="confirmCoin()">
+              <span x-show="isSaving" class="loading loading-spinner loading-sm"></span>
               确认
             </button>
           </div>
