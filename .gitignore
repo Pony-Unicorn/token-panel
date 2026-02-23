@@ -2,11 +2,3 @@
 
 # misc
 .DS_Store
-
-# build
-node_modules/
-dist/
-.dev.vars
-
-# local test files
-livetest.html
