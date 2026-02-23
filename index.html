@@ -255,13 +255,13 @@
                     <!-- Name + Code -->
                     <div class="min-w-0">
                       <div class="text-sm font-semibold leading-snug truncate" x-text="prices[coin]?.name ?? coin"></div>
-                      <div class="text-xs text-base-content/45 leading-none" x-text="coin"></div>
+                      <div class="text-xs text-base-content/45 leading-none mt-0.5" x-text="coin"></div>
                     </div>
 
                     <!-- Price + 24hr -->
                     <div class="text-right min-w-0">
                       <div class="text-sm font-mono font-semibold leading-snug tabular-nums" x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"></div>
-                      <div class="text-xs leading-none tabular-nums"
+                      <div class="text-xs leading-none tabular-nums mt-0.5"
                            :class="prices[coin]?.delta?.day != null ? deltaClass(prices[coin].delta.day) : 'text-base-content/30'"
                            x-text="prices[coin]?.delta?.day != null ? formatDelta(prices[coin].delta.day) : '—'"></div>
                     </div>
@@ -269,7 +269,7 @@
                     <!-- ATH + ATH DD% -->
                     <div class="text-right min-w-0">
                       <div class="text-xs font-mono text-base-content/45 leading-snug tabular-nums" x-text="prices[coin]?.allTimeHighUSD ? formatPrice(prices[coin].allTimeHighUSD) : '—'"></div>
-                      <div class="text-xs leading-none tabular-nums"
+                      <div class="text-xs leading-none tabular-nums mt-0.5"
                            :class="athDdClass(prices[coin])"
                            x-text="prices[coin] ? formatAthDd(prices[coin]) : '—'"></div>
                     </div>
