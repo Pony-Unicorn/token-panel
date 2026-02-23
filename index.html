@@ -8,7 +8,7 @@
       content="Live BTC, ETH, SOL prices with 24H change and market overview."
     />
     <link rel="icon" href="/favicon.png" />
-    <title>Token Panel</title>
+    <title>TPP-Token Price Panel</title>
 
     <!-- 1. DaisyUI CSS -->
     <link
@@ -77,7 +77,21 @@
         <template x-if="!isLoading && loadError">
           <div class="flex items-center justify-center w-full h-64">
             <div class="alert alert-error max-w-sm" role="alert">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5 shrink-0"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
               <span x-text="loadError"></span>
               <button class="btn btn-sm" @click="loadData()">重试</button>
             </div>
@@ -199,18 +213,18 @@
                       <div>
                         <div
                           class="text-lg font-mono font-semibold"
-                          x-text="formatPrice(prices[coin].price)"
+                          x-text="formatPrice(prices[coin].rate)"
                         ></div>
                         <div
                           class="flex items-center justify-between text-xs mt-1"
                         >
                           <span
-                            :class="deltaClass(prices[coin].delta_24h)"
-                            x-text="formatDelta(prices[coin].delta_24h)"
+                            :class="deltaClass(prices[coin].delta?.day)"
+                            x-text="formatDelta(prices[coin].delta?.day)"
                           ></span>
                           <span
                             class="text-base-content/50"
-                            x-text="formatMarketCap(prices[coin].market_cap)"
+                            x-text="formatMarketCap(prices[coin].cap)"
                           ></span>
                         </div>
                       </div>
@@ -263,11 +277,22 @@
             @keydown.enter="confirmGroup()"
           />
           <div class="modal-action">
-            <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.groupModal.close()">
+            <button
+              class="btn btn-ghost"
+              :disabled="isSaving"
+              @click="$refs.groupModal.close()"
+            >
               取消
             </button>
-            <button class="btn btn-primary" :disabled="isSaving" @click="confirmGroup()">
-              <span x-show="isSaving" class="loading loading-spinner loading-sm"></span>
+            <button
+              class="btn btn-primary"
+              :disabled="isSaving"
+              @click="confirmGroup()"
+            >
+              <span
+                x-show="isSaving"
+                class="loading loading-spinner loading-sm"
+              ></span>
               确认
             </button>
           </div>
@@ -289,11 +314,22 @@
             @keydown.enter="confirmCoin()"
           />
           <div class="modal-action">
-            <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.coinModal.close()">
+            <button
+              class="btn btn-ghost"
+              :disabled="isSaving"
+              @click="$refs.coinModal.close()"
+            >
               取消
             </button>
-            <button class="btn btn-primary" :disabled="isSaving" @click="confirmCoin()">
-              <span x-show="isSaving" class="loading loading-spinner loading-sm"></span>
+            <button
+              class="btn btn-primary"
+              :disabled="isSaving"
+              @click="confirmCoin()"
+            >
+              <span
+                x-show="isSaving"
+                class="loading loading-spinner loading-sm"
+              ></span>
               确认
             </button>
           </div>
@@ -307,13 +343,22 @@
       <dialog x-ref="confirmModal" class="modal">
         <div class="modal-box">
           <h3 class="text-lg font-bold mb-2">删除看板</h3>
-          <p class="text-base-content/70 mb-4">确认删除该看板？此操作不可撤销。</p>
+          <p class="text-base-content/70 mb-4">
+            确认删除该看板？此操作不可撤销。
+          </p>
           <div class="modal-action">
             <button class="btn btn-ghost" @click="$refs.confirmModal.close()">
               取消
             </button>
-            <button class="btn btn-error" :disabled="isSaving" @click="confirmDelete()">
-              <span x-show="isSaving" class="loading loading-spinner loading-sm"></span>
+            <button
+              class="btn btn-error"
+              :disabled="isSaving"
+              @click="confirmDelete()"
+            >
+              <span
+                x-show="isSaving"
+                class="loading loading-spinner loading-sm"
+              ></span>
               删除
             </button>
           </div>
@@ -349,7 +394,6 @@
             body: JSON.stringify(groups),
           }).then((r) => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            return r.json();
           });
         },
       };
@@ -406,7 +450,9 @@
                 priceApi.getAll(),
               ]);
               this.groups = groups;
-              this.prices = priceResult.data;
+              this.prices = Object.fromEntries(
+                (Array.isArray(priceResult.data) ? priceResult.data : []).map((c) => [c.code, c]),
+              );
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
                 : null;
@@ -420,7 +466,9 @@
           async refreshPrices() {
             try {
               const priceResult = await priceApi.getAll();
-              this.prices = priceResult.data;
+              this.prices = Object.fromEntries(
+                (Array.isArray(priceResult.data) ? priceResult.data : []).map((c) => [c.code, c]),
+              );
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
                 : null;

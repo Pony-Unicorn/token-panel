@@ -1,10 +1,4 @@
-const PRICE_CACHE_TTL = 300; // seconds (5 minutes)
-
-const json = (data, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
+const PRICE_CACHE_TTL = 120;
 
 export default {
   async fetch(request, env) {
@@ -14,7 +8,7 @@ export default {
     // GET /api/groups
     if (pathname === "/api/groups" && method === "GET") {
       const groups = (await env.KV.get("groups", "json")) ?? [];
-      return json(groups);
+      return Response.json(groups);
     }
 
     // PUT /api/groups — full replace
@@ -23,29 +17,32 @@ export default {
       try {
         groups = await request.json();
       } catch {
-        return json({ error: "Invalid JSON" }, 400);
+        return new Response("Invalid JSON", {
+          status: 400,
+        });
       }
       if (!Array.isArray(groups)) {
-        return json({ error: "Body must be an array" }, 400);
+        return new Response("Body must be an array.", {
+          status: 400,
+        });
       }
       await env.KV.put("groups", JSON.stringify(groups));
       await env.KV.delete("prices_cache"); // invalidate so next fetch is fresh
-      return json({ ok: true });
+      return new Response(null, {
+        status: 204,
+      });
     }
 
     // GET /api/prices
     if (pathname === "/api/prices" && method === "GET") {
+      const cache = await env.KV.get("prices_cache", "json");
+      if (cache) return Response.json(cache);
+
       const groups = (await env.KV.get("groups", "json")) ?? [];
       const coins = [...new Set(groups.flatMap((g) => g.coins))];
 
       if (coins.length === 0) {
-        return json({ updatedAt: Date.now(), data: {} });
-      }
-
-      // Return cache if still fresh
-      const cache = await env.KV.get("prices_cache", "json");
-      if (cache && Date.now() - cache.updatedAt < PRICE_CACHE_TTL * 1000) {
-        return json(cache);
+        return Response.json({ updatedAt: Date.now(), data: {} });
       }
 
       // Fetch from livecoinwatch
@@ -60,34 +57,24 @@ export default {
           currency: "USD",
           sort: "rank",
           order: "ascending",
-          offset: 0,
-          limit: coins.length,
-          meta: false,
+          meta: true,
         }),
       });
 
       if (!lcwRes.ok) {
-        // Return stale cache rather than failing hard
-        if (cache) return json(cache);
-        return json({ error: "Failed to fetch prices" }, 502);
+        return new Response("Failed to fetch prices", { status: 502 });
       }
 
       const lcwData = await lcwRes.json();
-      const data = {};
-      for (const coin of lcwData) {
-        data[coin.code] = {
-          price: coin.rate,
-          delta_24h: coin.delta.day, // decimal, e.g. 0.023 = +2.3%
-          market_cap: coin.cap,
-        };
-      }
+      const result = { updatedAt: Date.now(), data: lcwData };
 
-      const result = { updatedAt: Date.now(), data };
-      await env.KV.put("prices_cache", JSON.stringify(result));
-      return json(result);
+      await env.KV.put("prices_cache", JSON.stringify(result), {
+        expirationTtl: PRICE_CACHE_TTL,
+      });
+
+      return Response.json(result);
     }
 
-    // All other requests → serve static assets from dist/
-    return env.ASSETS.fetch(request);
+    return new Response("Not Found.", { status: 404 });
   },
 };
