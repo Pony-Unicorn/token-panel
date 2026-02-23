@@ -157,7 +157,7 @@
 
         <!-- Board columns -->
         <template x-for="group in groups" :key="group.id">
-          <div class="card bg-base-100 shadow w-72 flex-shrink-0">
+          <div class="card bg-base-100 shadow w-96 flex-shrink-0">
             <div class="card-body p-4 gap-3">
               <!-- Board header -->
               <div class="flex items-center justify-between">
@@ -215,55 +215,76 @@
               </div>
 
               <!-- Token cards -->
-              <div class="flex flex-col gap-2">
+              <div class="flex flex-col">
+                <!-- Column header -->
+                <template x-if="group.coins.length > 0">
+                  <div class="grid grid-cols-[1.5rem_2rem_1fr_5rem_5rem_1rem] gap-x-2 items-end px-1 pb-1.5 mb-0.5 border-b border-base-300">
+                    <span class="text-[10px] text-base-content/40 text-right">#</span>
+                    <span></span>
+                    <div>
+                      <div class="text-[10px] text-base-content/50 leading-none">名字</div>
+                      <div class="text-[9px] text-base-content/30 leading-snug">Symbol</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-[10px] text-base-content/50 leading-none">价格</div>
+                      <div class="text-[9px] text-base-content/30 leading-snug">24hr</div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-[10px] text-base-content/50 leading-none">历史最高价</div>
+                      <div class="text-[9px] text-base-content/30 leading-snug">ATH DD %</div>
+                    </div>
+                    <span></span>
+                  </div>
+                </template>
+
                 <template x-for="coin in group.coins" :key="coin">
-                  <div class="bg-base-200 rounded-xl p-3 relative group/card">
+                  <div class="grid grid-cols-[1.5rem_2rem_1fr_5rem_5rem_1rem] gap-x-2 items-center px-1 py-1.5 rounded-lg group/card hover:bg-base-200 transition-colors">
+                    <!-- Rank -->
+                    <span class="text-[11px] text-base-content/35 text-right tabular-nums" x-text="prices[coin]?.rank ?? '—'"></span>
+
+                    <!-- Logo -->
+                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden" :style="prices[coin]?.color ? 'background:' + prices[coin].color + '22' : 'background:oklch(var(--b3))'">
+                      <template x-if="prices[coin]?.png32">
+                        <img :src="prices[coin].png32" :alt="coin" class="w-full h-full object-contain p-0.5">
+                      </template>
+                      <template x-if="!prices[coin]?.png32">
+                        <span class="text-[9px] font-bold text-base-content/50" x-text="coin.slice(0,2)"></span>
+                      </template>
+                    </div>
+
+                    <!-- Name + Code -->
+                    <div class="min-w-0">
+                      <div class="text-sm font-semibold leading-snug truncate" x-text="prices[coin]?.name ?? coin"></div>
+                      <div class="text-xs text-base-content/45 leading-none" x-text="coin"></div>
+                    </div>
+
+                    <!-- Price + 24hr -->
+                    <div class="text-right min-w-0">
+                      <div class="text-sm font-mono font-semibold leading-snug tabular-nums" x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"></div>
+                      <div class="text-xs leading-none tabular-nums"
+                           :class="prices[coin]?.delta?.day != null ? deltaClass(prices[coin].delta.day) : 'text-base-content/30'"
+                           x-text="prices[coin]?.delta?.day != null ? formatDelta(prices[coin].delta.day) : '—'"></div>
+                    </div>
+
+                    <!-- ATH + ATH DD% -->
+                    <div class="text-right min-w-0">
+                      <div class="text-xs font-mono text-base-content/45 leading-snug tabular-nums" x-text="prices[coin]?.allTimeHighUSD ? formatPrice(prices[coin].allTimeHighUSD) : '—'"></div>
+                      <div class="text-xs leading-none tabular-nums"
+                           :class="athDdClass(prices[coin])"
+                           x-text="prices[coin] ? formatAthDd(prices[coin]) : '—'"></div>
+                    </div>
+
+                    <!-- Remove -->
                     <button
-                      class="btn btn-ghost btn-xs absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity"
+                      class="btn btn-ghost btn-xs w-4 h-4 p-0 min-h-0 opacity-0 group-hover/card:opacity-100 transition-opacity"
                       @click="removeCoin(group.id, coin)"
                       title="移除"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="w-3 h-3"
-                        aria-hidden="true"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3" aria-hidden="true">
                         <path d="M18 6 6 18"></path>
                         <path d="m6 6 12 12"></path>
                       </svg>
                     </button>
-
-                    <div class="font-bold text-sm mb-1" x-text="coin"></div>
-
-                    <template x-if="prices[coin]">
-                      <div>
-                        <div
-                          class="text-lg font-mono font-semibold"
-                          x-text="formatPrice(prices[coin].rate)"
-                        ></div>
-                        <div
-                          class="flex items-center justify-between text-xs mt-1"
-                        >
-                          <span
-                            :class="deltaClass(prices[coin].delta?.day)"
-                            x-text="formatDelta(prices[coin].delta?.day)"
-                          ></span>
-                          <span
-                            class="text-base-content/50"
-                            x-text="formatMarketCap(prices[coin].cap)"
-                          ></span>
-                        </div>
-                      </div>
-                    </template>
-                    <template x-if="!prices[coin]">
-                      <div class="text-xs text-base-content/30">暂无数据</div>
-                    </template>
                   </div>
                 </template>
               </div>
@@ -611,12 +632,25 @@
           },
 
           formatDelta(delta) {
-            const pct = (delta * 100).toFixed(2);
-            return (delta >= 0 ? "+" : "") + pct + "%";
+            if (delta == null) return "—";
+            const pct = ((delta - 1) * 100).toFixed(2);
+            return (delta >= 1 ? "+" : "") + pct + "%";
           },
 
           deltaClass(delta) {
-            return delta >= 0 ? "text-success" : "text-error";
+            if (delta == null) return "text-base-content/40";
+            return delta >= 1 ? "text-success" : "text-error";
+          },
+
+          formatAthDd(p) {
+            if (!p?.rate || !p?.allTimeHighUSD) return "—";
+            const dd = ((p.rate / p.allTimeHighUSD) - 1) * 100;
+            return dd.toFixed(1) + "%";
+          },
+
+          athDdClass(p) {
+            if (!p?.rate || !p?.allTimeHighUSD) return "text-base-content/40";
+            return p.rate >= p.allTimeHighUSD ? "text-success" : "text-error/70";
           },
 
           formatMarketCap(cap) {

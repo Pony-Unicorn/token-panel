@@ -1,14 +1,24 @@
 const PRICE_CACHE_TTL = 120;
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, PUT, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
     const method = request.method;
 
+    if (method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS });
+    }
+
     // GET /api/groups
     if (pathname === "/api/groups" && method === "GET") {
       const groups = (await env.KV.get("groups", "json")) ?? [];
-      return Response.json(groups);
+      return Response.json(groups, { headers: CORS });
     }
 
     // PUT /api/groups — full replace
@@ -19,30 +29,33 @@ export default {
       } catch {
         return new Response("Invalid JSON", {
           status: 400,
+          headers: CORS,
         });
       }
       if (!Array.isArray(groups)) {
         return new Response("Body must be an array.", {
           status: 400,
+          headers: CORS,
         });
       }
       await env.KV.put("groups", JSON.stringify(groups));
       await env.KV.delete("prices_cache"); // invalidate so next fetch is fresh
       return new Response(null, {
         status: 204,
+        headers: CORS,
       });
     }
 
     // GET /api/prices
     if (pathname === "/api/prices" && method === "GET") {
       const cache = await env.KV.get("prices_cache", "json");
-      if (cache) return Response.json(cache);
+      if (cache) return Response.json(cache, { headers: CORS });
 
       const groups = (await env.KV.get("groups", "json")) ?? [];
       const coins = [...new Set(groups.flatMap((g) => g.coins))];
 
       if (coins.length === 0) {
-        return Response.json({ updatedAt: Date.now(), data: [] });
+        return Response.json({ updatedAt: Date.now(), data: [] }, { headers: CORS });
       }
 
       // Fetch from livecoinwatch
@@ -71,9 +84,9 @@ export default {
         expirationTtl: PRICE_CACHE_TTL,
       });
 
-      return Response.json(result);
+      return Response.json(result, { headers: CORS });
     }
 
-    return new Response("Not Found.", { status: 404 });
+    return new Response("Not Found.", { status: 404, headers: CORS });
   },
 };
