@@ -8,25 +8,17 @@
       content="Live BTC, ETH, SOL prices with 24H change and market overview."
     />
     <link rel="icon" href="/favicon.png" />
-    <title>TPP-Token Price Panel</title>
-
-    <!-- 1. DaisyUI CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/daisyui@5"
       rel="stylesheet"
       type="text/css"
     />
-
-    <!-- 2. Tailwind -->
+    <title>TPP-Token Price Panel</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
-    <!-- 3. Alpine.js -->
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js"
     ></script>
-
-    <!-- 4. Day.js -->
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
   </head>
   <body class="min-h-screen bg-base-200">
@@ -59,6 +51,46 @@
             </svg>
             新建看板
           </button>
+        </div>
+      </div>
+
+      <!-- Alert bar -->
+      <div class="relative z-20">
+        <div
+          x-show="$store.alert.visible"
+          x-transition:enter="transition ease-out duration-200"
+          x-transition:enter-start="opacity-0 -translate-y-2"
+          x-transition:enter-end="opacity-100 translate-y-0"
+          x-transition:leave="transition ease-in duration-150"
+          x-transition:leave-start="opacity-100 translate-y-0"
+          x-transition:leave-end="opacity-0 -translate-y-2"
+          class="absolute inset-x-0 pt-2"
+          role="alert"
+        >
+          <div class="max-w-6xl mx-auto px-4 md:px-6">
+            <div :class="'alert alert-' + $store.alert.type" class="shadow-md">
+              <span x-text="$store.alert.message"></span>
+              <button
+                class="btn btn-ghost btn-sm btn-square ml-auto"
+                @click="$store.alert.dismiss()"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="w-4 h-4"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18"></path>
+                  <path d="m6 6 12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -367,15 +399,6 @@
           <button>close</button>
         </form>
       </dialog>
-
-      <!-- Toast -->
-      <div class="toast toast-top toast-center z-50">
-        <template x-for="t in $store.toast.items" :key="t.id">
-          <div x-transition :class="'alert alert-' + t.type">
-            <span x-text="t.message"></span>
-          </div>
-        </template>
-      </div>
     </div>
 
     <script>
@@ -407,20 +430,26 @@
         },
       };
 
-      const TOAST_MAX = 5;
-      const TOAST_DURATION_MS = 3000;
-      const toast = (msg, type) => Alpine.store("toast")?.show(msg, type);
+      let _alertTimer = null;
+      const toast = (msg, type) => Alpine.store("alert")?.show(msg, type);
 
       document.addEventListener("alpine:init", () => {
-        Alpine.store("toast", {
-          items: [],
+        Alpine.store("alert", {
+          message: "",
+          type: "success",
+          visible: false,
           show(msg, type = "success") {
-            const id = Date.now();
-            this.items.push({ id, message: msg, type });
-            if (this.items.length > TOAST_MAX) this.items.shift();
-            setTimeout(() => {
-              this.items = this.items.filter((t) => t.id !== id);
-            }, TOAST_DURATION_MS);
+            clearTimeout(_alertTimer);
+            this.message = msg;
+            this.type = type;
+            this.visible = true;
+            _alertTimer = setTimeout(() => {
+              this.visible = false;
+            }, 3000);
+          },
+          dismiss() {
+            clearTimeout(_alertTimer);
+            this.visible = false;
           },
         });
 
@@ -445,19 +474,22 @@
             this.isLoading = true;
             this.loadError = "";
             try {
-              const [groups, priceResult] = await Promise.all([
-                groupApi.getAll(),
-                priceApi.getAll(),
-              ]);
-              this.groups = groups;
+              this.groups = await groupApi.getAll();
+            } catch (e) {
+              this.loadError = e?.message || "加载失败，请稍后重试";
+              this.isLoading = false;
+              return;
+            }
+            try {
+              const priceResult = await priceApi.getAll();
               this.prices = Object.fromEntries(
                 (priceResult.data ?? []).map((c) => [c.code, c]),
               );
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
                 : null;
-            } catch (e) {
-              this.loadError = e?.message || "加载失败，请稍后重试";
+            } catch {
+              // prices unavailable, show groups without price data
             } finally {
               this.isLoading = false;
             }
@@ -477,16 +509,18 @@
             }
           },
 
-          async saveGroups() {
+          async saveGroups(groups = this.groups) {
             this.isSaving = true;
+            let success = false;
             try {
-              await groupApi.update(this.groups);
+              await groupApi.update(groups);
+              success = true;
             } catch (e) {
               toast("保存失败，请重试", "error");
-              await this.loadData(); // re-sync with server
             } finally {
               this.isSaving = false;
             }
+            return success;
           },
 
           // --- Group actions ---
@@ -504,18 +538,21 @@
           async confirmGroup() {
             const name = this.groupModal.name.trim();
             if (!name) return;
+            let newGroups;
             if (this.groupModal.isEdit) {
-              const g = this.groups.find((g) => g.id === this.groupModal.id);
-              if (g) g.name = name;
+              newGroups = this.groups.map((g) =>
+                g.id === this.groupModal.id ? { ...g, name } : g,
+              );
             } else {
-              this.groups.push({
-                id: crypto.randomUUID(),
-                name,
-                coins: [],
-              });
+              newGroups = [
+                ...this.groups,
+                { id: crypto.randomUUID(), name, coins: [] },
+              ];
             }
-            this.$refs.groupModal.close();
-            await this.saveGroups();
+            if (await this.saveGroups(newGroups)) {
+              this.groups = newGroups;
+              this.$refs.groupModal.close();
+            }
           },
 
           openDeleteGroup(id) {
