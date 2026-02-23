@@ -248,13 +248,13 @@
                         <img :src="prices[coin].png32" :alt="coin" class="w-full h-full object-contain p-0.5">
                       </template>
                       <template x-if="!prices[coin]?.png32">
-                        <span class="text-[9px] font-bold text-base-content/50" x-text="coin.slice(0,2)"></span>
+                        <span class="text-[9px] font-bold text-base-content/50" x-text="coin.replaceAll('_', '').slice(0,2)"></span>
                       </template>
                     </div>
 
                     <!-- Name + Code -->
                     <div class="min-w-0">
-                      <div class="text-sm font-semibold leading-snug truncate" x-text="prices[coin]?.name ?? coin"></div>
+                      <div class="text-sm font-semibold leading-snug truncate" x-text="prices[coin]?.name ?? coin.replaceAll('_', '')"></div>
                       <div class="text-xs text-base-content/45 leading-none mt-0.5" x-text="coin.replaceAll('_', '')"></div>
                     </div>
 
