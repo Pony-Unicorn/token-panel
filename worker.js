@@ -46,11 +46,12 @@ export default {
       }
 
       // Fetch from livecoinwatch
+      const APIkey = await env.SECRETS_LCW_API_KEY.get();
       const lcwRes = await fetch("https://api.livecoinwatch.com/coins/map", {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-api-key": env.LCW_API_KEY,
+          "x-api-key": APIkey,
         },
         body: JSON.stringify({
           codes: coins,
