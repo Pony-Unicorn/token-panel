@@ -96,7 +96,7 @@
 
       <!-- Boards -->
       <div
-        class="flex flex-wrap gap-4 p-6 items-start min-h-[calc(100vh-64px)]"
+        class="flex flex-wrap gap-4 p-6 items-start content-start min-h-[calc(100vh-64px)]"
       >
         <!-- Loading -->
         <template x-if="isLoading && groups.length === 0">
@@ -255,7 +255,7 @@
                     <!-- Name + Code -->
                     <div class="min-w-0">
                       <div class="text-sm font-semibold leading-snug truncate" x-text="prices[coin]?.name ?? coin"></div>
-                      <div class="text-xs text-base-content/45 leading-none mt-0.5" x-text="coin"></div>
+                      <div class="text-xs text-base-content/45 leading-none mt-0.5" x-text="coin.replaceAll('_', '')"></div>
                     </div>
 
                     <!-- Price + 24hr -->
