@@ -61,9 +61,7 @@ export default {
         }),
       });
 
-      if (!lcwRes.ok) {
-        return lcwRes;
-      }
+      if (!lcwRes.ok) return lcwRes;
 
       const lcwData = await lcwRes.json();
       const result = { updatedAt: Date.now(), data: lcwData };

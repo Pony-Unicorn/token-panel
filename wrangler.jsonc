@@ -5,6 +5,9 @@
   "assets": {
     "directory": "./"
   },
+  "vars": {
+    "LCW_API_KEY": "e35dcada-8491-4b20-8f31-fb6642508d07"
+  },
   "routes": [
     {
       "pattern": "tpp.testbug.cc",
