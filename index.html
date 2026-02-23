@@ -263,10 +263,10 @@
             @keydown.enter="confirmGroup()"
           />
           <div class="modal-action">
-            <button class="btn btn-ghost" @click="$refs.groupModal.close()">
+            <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.groupModal.close()">
               取消
             </button>
-            <button class="btn btn-primary" @click="confirmGroup()">
+            <button class="btn btn-primary" :disabled="isSaving" :class="{ 'loading': isSaving }" @click="confirmGroup()">
               确认
             </button>
           </div>
@@ -288,10 +288,12 @@
             @keydown.enter="confirmCoin()"
           />
           <div class="modal-action">
-            <button class="btn btn-ghost" @click="$refs.coinModal.close()">
+            <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.coinModal.close()">
               取消
             </button>
-            <button class="btn btn-primary" @click="confirmCoin()">确认</button>
+            <button class="btn btn-primary" :disabled="isSaving" :class="{ 'loading': isSaving }" @click="confirmCoin()">
+              确认
+            </button>
           </div>
         </div>
         <form method="dialog" class="modal-backdrop">
@@ -362,6 +364,7 @@
           lastUpdated: null,
           isLoading: false,
           loadError: "",
+          isSaving: false,
 
           groupModal: { isEdit: false, id: null, name: "" },
           coinModal: { groupId: null, symbol: "" },
@@ -404,12 +407,14 @@
           },
 
           async saveGroups() {
+            this.isSaving = true;
             try {
               await groupApi.update(this.groups);
             } catch (e) {
               toast("保存失败，请重试", "error");
               await this.loadData(); // re-sync with server
-              throw e;
+            } finally {
+              this.isSaving = false;
             }
           },
 
