@@ -144,7 +144,7 @@
                   </button>
                   <button
                     class="btn btn-ghost btn-xs text-error"
-                    @click="deleteGroup(group.id)"
+                    @click="openDeleteGroup(group.id)"
                     title="删除看板"
                   >
                     <svg
@@ -303,6 +303,26 @@
         </form>
       </dialog>
 
+      <!-- Delete confirm modal -->
+      <dialog x-ref="confirmModal" class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold mb-2">删除看板</h3>
+          <p class="text-base-content/70 mb-4">确认删除该看板？此操作不可撤销。</p>
+          <div class="modal-action">
+            <button class="btn btn-ghost" @click="$refs.confirmModal.close()">
+              取消
+            </button>
+            <button class="btn btn-error" :disabled="isSaving" @click="confirmDelete()">
+              <span x-show="isSaving" class="loading loading-spinner loading-sm"></span>
+              删除
+            </button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+
       <!-- Toast -->
       <div class="toast toast-top toast-center z-50">
         <template x-for="t in $store.toast.items" :key="t.id">
@@ -370,6 +390,7 @@
 
           groupModal: { isEdit: false, id: null, name: "" },
           coinModal: { groupId: null, symbol: "" },
+          confirmDeleteModal: { groupId: null },
 
           async init() {
             await this.loadData();
@@ -449,9 +470,16 @@
             await this.saveGroups();
           },
 
-          async deleteGroup(id) {
-            if (!confirm("确认删除该看板？")) return;
-            this.groups = this.groups.filter((g) => g.id !== id);
+          openDeleteGroup(id) {
+            this.confirmDeleteModal = { groupId: id };
+            this.$refs.confirmModal.showModal();
+          },
+
+          async confirmDelete() {
+            this.$refs.confirmModal.close();
+            this.groups = this.groups.filter(
+              (g) => g.id !== this.confirmDeleteModal.groupId,
+            );
             await this.saveGroups();
           },
 
