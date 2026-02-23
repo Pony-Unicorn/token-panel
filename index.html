@@ -11,10 +11,10 @@
     <!-- 2. Tailwind -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-    <!-- 3. Alpine.js（无插件） -->
+    <!-- 3. Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js"></script>
 
-    <!-- 4. 其他库 -->
+    <!-- 4. Day.js -->
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
   </head>
   <body class="min-h-screen bg-base-200">
@@ -165,7 +165,50 @@
     </div>
 
     <script>
+      // --- API helpers (native fetch) ---
+      const groupApi = {
+        getAll() {
+          return fetch("/api/groups").then((r) => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+          });
+        },
+        update(groups) {
+          return fetch("/api/groups", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(groups),
+          }).then((r) => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+          });
+        },
+      };
+
+      const priceApi = {
+        getAll() {
+          return fetch("/api/prices").then((r) => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+          });
+        },
+      };
+
+      const toast = (msg, type) => Alpine.store("toast").show(msg, type);
+
       document.addEventListener("alpine:init", () => {
+        Alpine.store("toast", {
+          items: [],
+          show(msg, type = "success") {
+            const id = Date.now();
+            this.items.push({ id, message: msg, type });
+            if (this.items.length > 5) this.items.shift();
+            setTimeout(() => {
+              this.items = this.items.filter((t) => t.id !== id);
+            }, 3000);
+          },
+        });
+
         Alpine.data("tokenPanel", () => ({
           groups: [],
           prices: {},
