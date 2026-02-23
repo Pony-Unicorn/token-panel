@@ -29,7 +29,7 @@
         </div>
         <div class="flex-none">
           <button class="btn btn-primary btn-sm" @click="openNewGroup()">
-            <iconify-icon icon="mdi:plus" width="16"></iconify-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             新建看板
           </button>
         </div>
@@ -48,7 +48,7 @@
         <!-- Empty state -->
         <template x-if="!isLoading && groups.length === 0">
           <div class="flex flex-col items-center justify-center w-full h-64 gap-3 text-base-content/40">
-            <iconify-icon icon="mdi:view-dashboard-outline" width="48"></iconify-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-12 h-12" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
             <p>还没有看板，点击右上角新建看板开始</p>
           </div>
         </template>
@@ -64,11 +64,11 @@
                 <div class="flex gap-1 flex-shrink-0">
                   <button class="btn btn-ghost btn-xs" @click="openEditGroup(group)"
                           title="重命名">
-                    <iconify-icon icon="mdi:pencil-outline" width="14"></iconify-icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
                   </button>
                   <button class="btn btn-ghost btn-xs text-error" @click="deleteGroup(group.id)"
                           title="删除看板">
-                    <iconify-icon icon="mdi:delete-outline" width="14"></iconify-icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                   </button>
                 </div>
               </div>
@@ -80,7 +80,7 @@
                     <button
                       class="btn btn-ghost btn-xs absolute top-1 right-1 opacity-0 group-hover/card:opacity-100 transition-opacity"
                       @click="removeCoin(group.id, coin)" title="移除">
-                      <iconify-icon icon="mdi:close" width="12"></iconify-icon>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
                     </button>
 
                     <div class="font-bold text-sm mb-1" x-text="coin"></div>
@@ -107,7 +107,7 @@
               <!-- Add coin -->
               <button class="btn btn-ghost btn-sm w-full text-base-content/50"
                       @click="openAddCoin(group.id)">
-                <iconify-icon icon="mdi:plus" width="16"></iconify-icon>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 添加代币
               </button>
             </div>
@@ -194,7 +194,9 @@
         },
       };
 
-      const toast = (msg, type) => Alpine.store("toast").show(msg, type);
+      const TOAST_MAX = 5;
+      const TOAST_DURATION_MS = 3000;
+      const toast = (msg, type) => Alpine.store("toast")?.show(msg, type);
 
       document.addEventListener("alpine:init", () => {
         Alpine.store("toast", {
@@ -202,10 +204,10 @@
           show(msg, type = "success") {
             const id = Date.now();
             this.items.push({ id, message: msg, type });
-            if (this.items.length > 5) this.items.shift();
+            if (this.items.length > TOAST_MAX) this.items.shift();
             setTimeout(() => {
               this.items = this.items.filter((t) => t.id !== id);
-            }, 3000);
+            }, TOAST_DURATION_MS);
           },
         });
 
