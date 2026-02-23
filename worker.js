@@ -42,7 +42,7 @@ export default {
       const coins = [...new Set(groups.flatMap((g) => g.coins))];
 
       if (coins.length === 0) {
-        return Response.json({ updatedAt: Date.now(), data: {} });
+        return Response.json({ updatedAt: Date.now(), data: [] });
       }
 
       // Fetch from livecoinwatch
@@ -62,7 +62,7 @@ export default {
       });
 
       if (!lcwRes.ok) {
-        return new Response("Failed to fetch prices", { status: 502 });
+        return lcwRes;
       }
 
       const lcwData = await lcwRes.json();

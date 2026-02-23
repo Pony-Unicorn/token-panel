@@ -451,7 +451,7 @@
               ]);
               this.groups = groups;
               this.prices = Object.fromEntries(
-                (Array.isArray(priceResult.data) ? priceResult.data : []).map((c) => [c.code, c]),
+                (priceResult.data ?? []).map((c) => [c.code, c]),
               );
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
@@ -467,7 +467,7 @@
             try {
               const priceResult = await priceApi.getAll();
               this.prices = Object.fromEntries(
-                (Array.isArray(priceResult.data) ? priceResult.data : []).map((c) => [c.code, c]),
+                (priceResult.data ?? []).map((c) => [c.code, c]),
               );
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)

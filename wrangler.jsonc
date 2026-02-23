@@ -5,6 +5,12 @@
   "assets": {
     "directory": "./"
   },
+  "routes": [
+    {
+      "pattern": "tpp.testbug.cc",
+      "custom_domain": true
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "KV",
