@@ -20,6 +20,18 @@
       src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
+    <style>
+      @keyframes flash-up {
+        0%, 30% { color: oklch(var(--su)); text-shadow: 0 0 8px oklch(var(--su) / 0.5); }
+        100% { color: inherit; text-shadow: none; }
+      }
+      @keyframes flash-down {
+        0%, 30% { color: oklch(var(--er)); text-shadow: 0 0 8px oklch(var(--er) / 0.5); }
+        100% { color: inherit; text-shadow: none; }
+      }
+      .price-flash-up   { animation: flash-up   0.9s ease-out forwards; }
+      .price-flash-down { animation: flash-down 0.9s ease-out forwards; }
+    </style>
   </head>
   <body class="min-h-screen bg-base-200">
     <div x-data="tokenPanel">
@@ -218,60 +230,98 @@
               <div class="flex flex-col">
                 <!-- Column header -->
                 <template x-if="group.coins.length > 0">
-                  <div class="grid grid-cols-[1.5rem_2rem_1fr_5rem_5rem_1rem] gap-x-2 items-end px-1 pb-1.5 mb-0.5 border-b border-base-300">
-                    <span class="text-[10px] text-base-content/40 text-right">#</span>
+                  <div
+                    class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-end px-1 pb-1.5 mb-0.5 border-b border-base-300"
+                  >
+                    <span class="text-[10px] text-base-content/40 text-right"
+                      >#</span
+                    >
                     <span></span>
                     <div>
-                      <div class="text-[10px] text-base-content/50 leading-none">名字</div>
-                      <div class="text-[9px] text-base-content/30 leading-snug">Symbol</div>
+                      <div
+                        class="text-[10px] text-base-content/50 leading-none"
+                      >
+                        名字
+                      </div>
+                      <div class="text-[9px] text-base-content/30 leading-snug">
+                        ATH / DD%
+                      </div>
                     </div>
                     <div class="text-right">
-                      <div class="text-[10px] text-base-content/50 leading-none">价格</div>
-                      <div class="text-[9px] text-base-content/30 leading-snug">24hr</div>
-                    </div>
-                    <div class="text-right">
-                      <div class="text-[10px] text-base-content/50 leading-none">历史最高价</div>
-                      <div class="text-[9px] text-base-content/30 leading-snug">ATH DD %</div>
+                      <div
+                        class="text-[10px] text-base-content/50 leading-none"
+                      >
+                        价格
+                      </div>
+                      <div class="text-[9px] text-base-content/30 leading-snug">
+                        24hr
+                      </div>
                     </div>
                     <span></span>
                   </div>
                 </template>
 
                 <template x-for="coin in group.coins" :key="coin">
-                  <div class="grid grid-cols-[1.5rem_2rem_1fr_5rem_5rem_1rem] gap-x-2 items-center px-1 py-1.5 rounded-lg group/card hover:bg-base-200 transition-colors">
+                  <div
+                    class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-center px-1 py-1.5 rounded-lg group/card hover:bg-base-200 transition-colors"
+                  >
                     <!-- Rank -->
-                    <span class="text-[11px] text-base-content/35 text-right tabular-nums" x-text="prices[coin]?.rank ?? '—'"></span>
+                    <span
+                      class="text-[11px] text-base-content/35 text-right tabular-nums"
+                      x-text="prices[coin]?.rank ?? '—'"
+                    ></span>
 
                     <!-- Logo -->
-                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden" :style="prices[coin]?.color ? 'background:' + prices[coin].color + '22' : 'background:oklch(var(--b3))'">
+                    <div
+                      class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
+                      :style="prices[coin]?.color ? 'background:' + prices[coin].color + '22' : 'background:oklch(var(--b3))'"
+                    >
                       <template x-if="prices[coin]?.png32">
-                        <img :src="prices[coin].png32" :alt="coin" class="w-full h-full object-contain p-0.5">
+                        <img
+                          :src="prices[coin].png32"
+                          :alt="coin"
+                          class="w-full h-full object-contain p-0.5"
+                        />
                       </template>
                       <template x-if="!prices[coin]?.png32">
-                        <span class="text-[9px] font-bold text-base-content/50" x-text="coin.replaceAll('_', '').slice(0,2)"></span>
+                        <span
+                          class="text-[9px] font-bold text-base-content/50"
+                          x-text="coin.replaceAll('_', '').slice(0,2)"
+                        ></span>
                       </template>
                     </div>
 
-                    <!-- Name + Code -->
+                    <!-- Name + ATH -->
                     <div class="min-w-0">
-                      <div class="text-sm font-semibold leading-snug truncate" x-text="prices[coin]?.name ?? coin.replaceAll('_', '')"></div>
-                      <div class="text-xs text-base-content/45 leading-none mt-0.5" x-text="coin.replaceAll('_', '')"></div>
+                      <div
+                        class="text-sm font-semibold leading-snug truncate"
+                        x-text="prices[coin]?.name ?? coin.replaceAll('_', '')"
+                      ></div>
+                      <div class="flex gap-1.5 items-center mt-0.5">
+                        <span
+                          class="text-xs font-mono text-base-content/45 leading-none tabular-nums"
+                          x-text="prices[coin]?.allTimeHighUSD ? formatPrice(prices[coin].allTimeHighUSD) : '—'"
+                        ></span>
+                        <span
+                          class="text-xs leading-none tabular-nums"
+                          :class="athDdClass(prices[coin])"
+                          x-text="prices[coin] ? formatAthDd(prices[coin]) : '—'"
+                        ></span>
+                      </div>
                     </div>
 
                     <!-- Price + 24hr -->
                     <div class="text-right min-w-0">
-                      <div class="text-sm font-mono font-semibold leading-snug tabular-nums" x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"></div>
-                      <div class="text-xs leading-none tabular-nums mt-0.5"
-                           :class="prices[coin]?.delta?.day != null ? deltaClass(prices[coin].delta.day) : 'text-base-content/30'"
-                           x-text="prices[coin]?.delta?.day != null ? formatDelta(prices[coin].delta.day) : '—'"></div>
-                    </div>
-
-                    <!-- ATH + ATH DD% -->
-                    <div class="text-right min-w-0">
-                      <div class="text-xs font-mono text-base-content/45 leading-snug tabular-nums" x-text="prices[coin]?.allTimeHighUSD ? formatPrice(prices[coin].allTimeHighUSD) : '—'"></div>
-                      <div class="text-xs leading-none tabular-nums mt-0.5"
-                           :class="athDdClass(prices[coin])"
-                           x-text="prices[coin] ? formatAthDd(prices[coin]) : '—'"></div>
+                      <div
+                        class="text-sm font-mono font-semibold leading-snug tabular-nums"
+                        :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''"
+                        x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"
+                      ></div>
+                      <div
+                        class="text-xs leading-none tabular-nums mt-0.5"
+                        :class="prices[coin]?.delta?.day != null ? deltaClass(prices[coin].delta.day) : 'text-base-content/30'"
+                        x-text="prices[coin]?.delta?.day != null ? formatDelta(prices[coin].delta.day) : '—'"
+                      ></div>
                     </div>
 
                     <!-- Remove -->
@@ -280,7 +330,17 @@
                       @click="removeCoin(group.id, coin)"
                       title="移除"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3" aria-hidden="true">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="w-3 h-3"
+                        aria-hidden="true"
+                      >
                         <path d="M18 6 6 18"></path>
                         <path d="m6 6 12 12"></path>
                       </svg>
@@ -424,15 +484,20 @@
 
     <script>
       // --- API helpers (native fetch) ---
+      // const API_BASE_URL = "";
+      const API_BASE_URL = "https://corsproxy.io/?url=https://tpp.testbug.cc";
+      const groupsUrl = `${API_BASE_URL}/api/groups`;
+      const pricesUrl = `${API_BASE_URL}/api/prices`;
+
       const groupApi = {
         getAll() {
-          return fetch("/api/groups").then((r) => {
+          return fetch(groupsUrl).then((r) => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
           });
         },
         update(groups) {
-          return fetch("/api/groups", {
+          return fetch(groupsUrl, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(groups),
@@ -444,7 +509,7 @@
 
       const priceApi = {
         getAll() {
-          return fetch("/api/prices").then((r) => {
+          return fetch(pricesUrl).then((r) => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
           });
@@ -477,6 +542,7 @@
         Alpine.data("tokenPanel", () => ({
           groups: [],
           prices: {},
+          priceFlash: {},
           lastUpdated: null,
           isLoading: false,
           loadError: "",
@@ -488,7 +554,7 @@
 
           async init() {
             await this.loadData();
-            setInterval(() => this.refreshPrices(), 5 * 60 * 1000);
+            setInterval(() => this.refreshPrices(), 60 * 1000);
           },
 
           async loadData() {
@@ -518,13 +584,30 @@
 
           async refreshPrices() {
             try {
+              const oldPrices = this.prices;
               const priceResult = await priceApi.getAll();
-              this.prices = Object.fromEntries(
+              const newPrices = Object.fromEntries(
                 (priceResult.data ?? []).map((c) => [c.code, c]),
               );
+
+              const flashes = {};
+              for (const coin of Object.keys(newPrices)) {
+                const oldRate = oldPrices[coin]?.rate;
+                const newRate = newPrices[coin]?.rate;
+                if (oldRate != null && newRate != null && oldRate !== newRate) {
+                  flashes[coin] = newRate > oldRate ? "up" : "down";
+                }
+              }
+
+              this.prices = newPrices;
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
                 : null;
+
+              if (Object.keys(flashes).length > 0) {
+                this.priceFlash = flashes;
+                setTimeout(() => { this.priceFlash = {}; }, 900);
+              }
             } catch (e) {
               toast("价格更新失败", "error");
             }
@@ -644,13 +727,15 @@
 
           formatAthDd(p) {
             if (!p?.rate || !p?.allTimeHighUSD) return "—";
-            const dd = ((p.rate / p.allTimeHighUSD) - 1) * 100;
+            const dd = (p.rate / p.allTimeHighUSD - 1) * 100;
             return dd.toFixed(1) + "%";
           },
 
           athDdClass(p) {
             if (!p?.rate || !p?.allTimeHighUSD) return "text-base-content/40";
-            return p.rate >= p.allTimeHighUSD ? "text-success" : "text-error/70";
+            return p.rate >= p.allTimeHighUSD
+              ? "text-success"
+              : "text-error/70";
           },
 
           formatMarketCap(cap) {

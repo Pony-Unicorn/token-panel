@@ -1,4 +1,6 @@
 const PRICE_CACHE_TTL = 120;
+const KV_GROUPS = "groups";
+const KV_PRICES_CACHE = "prices_cache";
 
 export default {
   async fetch(request, env) {
@@ -7,7 +9,7 @@ export default {
 
     // GET /api/groups
     if (pathname === "/api/groups" && method === "GET") {
-      const groups = (await env.KV.get("groups", "json")) ?? [];
+      const groups = (await env.KV.get(KV_GROUPS, "json")) ?? [];
       return Response.json(groups);
     }
 
@@ -22,17 +24,17 @@ export default {
       if (!Array.isArray(groups)) {
         return new Response("Body must be an array.", { status: 400 });
       }
-      await env.KV.put("groups", JSON.stringify(groups));
-      await env.KV.delete("prices_cache"); // invalidate so next fetch is fresh
+      await env.KV.put(KV_GROUPS, JSON.stringify(groups));
+      await env.KV.delete(KV_PRICES_CACHE);
       return new Response(null, { status: 204 });
     }
 
     // GET /api/prices
     if (pathname === "/api/prices" && method === "GET") {
-      const cache = await env.KV.get("prices_cache", "json");
+      const cache = await env.KV.get(KV_PRICES_CACHE, "json");
       if (cache) return Response.json(cache);
 
-      const groups = (await env.KV.get("groups", "json")) ?? [];
+      const groups = (await env.KV.get(KV_GROUPS, "json")) ?? [];
       const coins = [...new Set(groups.flatMap((g) => g.coins))];
 
       if (coins.length === 0) {
@@ -61,7 +63,7 @@ export default {
       const lcwData = await lcwRes.json();
       const result = { updatedAt: Date.now(), data: lcwData };
 
-      await env.KV.put("prices_cache", JSON.stringify(result), {
+      await env.KV.put(KV_PRICES_CACHE, JSON.stringify(result), {
         expirationTtl: PRICE_CACHE_TTL,
       });
 
