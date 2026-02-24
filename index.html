@@ -22,15 +22,15 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
     <style>
       @keyframes flash-up {
-        0%, 30% { color: oklch(var(--su)); text-shadow: 0 0 8px oklch(var(--su) / 0.5); }
-        100% { color: inherit; text-shadow: none; }
+        0%, 30% { background-color: oklch(var(--su) / 0.25); }
+        100% { background-color: transparent; }
       }
       @keyframes flash-down {
-        0%, 30% { color: oklch(var(--er)); text-shadow: 0 0 8px oklch(var(--er) / 0.5); }
-        100% { color: inherit; text-shadow: none; }
+        0%, 30% { background-color: oklch(var(--er) / 0.25); }
+        100% { background-color: transparent; }
       }
-      .price-flash-up   { animation: flash-up   0.9s ease-out forwards; }
-      .price-flash-down { animation: flash-down 0.9s ease-out forwards; }
+      .price-flash-up   { animation: flash-up   0.9s ease-out forwards; border-radius: 4px; }
+      .price-flash-down { animation: flash-down 0.9s ease-out forwards; border-radius: 4px; }
     </style>
   </head>
   <body class="min-h-screen bg-base-200">
@@ -311,10 +311,10 @@
                     </div>
 
                     <!-- Price + 24hr -->
-                    <div class="text-right min-w-0">
+                    <div class="text-right min-w-0 px-1"
+                         :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''">
                       <div
                         class="text-sm font-mono font-semibold leading-snug tabular-nums"
-                        :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''"
                         x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"
                       ></div>
                       <div
