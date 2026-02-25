@@ -10,6 +10,7 @@ curl --request GET \
   "symbol": "btc",
   "name": "Bitcoin", 币名字
   "image": "<https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1696501400>", logo
+
   "market_cap_rank": 1, 排名
   "current_price": 70187, 当前价格
   "high_24h": 70215, 24小时最高价
@@ -17,4 +18,5 @@ curl --request GET \
   price_change_percentage_24h 24小时涨跌
   ath 历史最高价
   "ath_change_percentage": -4.77063,
+
 - 面板排序、自定义顺序，面板顺序可调整
