@@ -46,8 +46,14 @@
           ></span>
         </div>
         <div class="flex-none">
-          <button class="btn btn-primary btn-sm" @click="openNewGroup()">
+          <button
+            class="btn btn-sm"
+            :class="isEditMode ? 'btn-success' : 'btn-ghost'"
+            @click="toggleEditMode()"
+          >
+            <!-- 编辑图标 -->
             <svg
+              x-show="!isEditMode"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
@@ -58,10 +64,25 @@
               class="w-4 h-4"
               aria-hidden="true"
             >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+              <path d="m15 5 4 4"></path>
             </svg>
-            新建看板
+            <!-- 完成图标 -->
+            <svg
+              x-show="isEditMode"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-4 h-4"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5"></path>
+            </svg>
+            <span x-text="isEditMode ? '完成' : '编辑'"></span>
           </button>
         </div>
       </div>
@@ -108,7 +129,7 @@
 
       <!-- Boards -->
       <div
-        class="flex flex-wrap gap-4 p-6 items-start content-start min-h-[calc(100vh-64px)]"
+        class="flex flex-wrap gap-3 p-3 sm:gap-4 sm:p-6 items-start content-start min-h-[calc(100vh-64px)] max-w-screen-2xl mx-auto"
       >
         <!-- Loading -->
         <template x-if="isLoading && groups.length === 0">
@@ -119,26 +140,9 @@
 
         <!-- Load error -->
         <template x-if="!isLoading && loadError">
-          <div class="flex items-center justify-center w-full h-64">
-            <div class="alert alert-error max-w-sm" role="alert">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="w-5 h-5 shrink-0"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              <span x-text="loadError"></span>
-              <button class="btn btn-sm" @click="loadData()">重试</button>
-            </div>
+          <div class="flex flex-col items-center justify-center w-full h-64 gap-2 text-base-content/60">
+            <span class="text-sm" x-text="loadError"></span>
+            <button class="btn btn-sm" @click="loadData()">重试</button>
           </div>
         </template>
 
@@ -167,9 +171,17 @@
           </div>
         </template>
 
+        <!-- Price error -->
+        <template x-if="priceError">
+          <div class="w-full flex items-center gap-2 text-sm text-base-content/50">
+            <span x-text="priceError"></span>
+            <button class="btn btn-xs" @click="refreshPrices()">重试</button>
+          </div>
+        </template>
+
         <!-- Board columns -->
         <template x-for="group in groups" :key="group.id">
-          <div class="card bg-base-100 shadow w-96 flex-shrink-0">
+          <div class="card bg-base-100 shadow w-full sm:w-80 flex-shrink-0">
             <div class="card-body p-4 gap-3">
               <!-- Board header -->
               <div class="flex items-center justify-between">
@@ -177,7 +189,7 @@
                   class="font-bold text-base truncate"
                   x-text="group.name"
                 ></h2>
-                <div class="flex gap-1 flex-shrink-0">
+                <div class="flex gap-1 flex-shrink-0" x-show="isEditMode">
                   <button
                     class="btn btn-ghost btn-xs"
                     @click="openEditGroup(group)"
@@ -326,7 +338,8 @@
 
                     <!-- Remove -->
                     <button
-                      class="btn btn-ghost btn-xs w-4 h-4 p-0 min-h-0 opacity-0 group-hover/card:opacity-100 transition-opacity"
+                      x-show="isEditMode"
+                      class="btn btn-ghost btn-xs w-4 h-4 p-0 min-h-0"
                       @click="removeCoin(group.id, coin)"
                       title="移除"
                     >
@@ -351,6 +364,7 @@
 
               <!-- Add coin -->
               <button
+                x-show="isEditMode"
                 class="btn btn-ghost btn-sm w-full text-base-content/50"
                 @click="openAddCoin(group.id)"
               >
@@ -372,6 +386,30 @@
               </button>
             </div>
           </div>
+        </template>
+
+        <!-- New group card (edit mode only) -->
+        <template x-if="isEditMode">
+          <button
+            class="card bg-base-100 shadow w-full sm:w-80 flex-shrink-0 h-24 flex items-center justify-center gap-2 border-2 border-dashed border-base-300 hover:border-primary hover:text-primary text-base-content/40 transition-colors cursor-pointer"
+            @click="openNewGroup()"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="w-5 h-5"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span class="text-sm">新建看板</span>
+          </button>
         </template>
       </div>
 
@@ -484,8 +522,8 @@
 
     <script>
       // --- API helpers (native fetch) ---
-      const API_BASE_URL = "";
-      // const API_BASE_URL = "https://corsproxy.io/?url=https://tpp.testbug.cc";
+      // const API_BASE_URL = "";
+      const API_BASE_URL = "https://corsproxy.io/?url=https://tpp.testbug.cc";
       const groupsUrl = `${API_BASE_URL}/api/groups`;
       const pricesUrl = `${API_BASE_URL}/api/prices`;
 
@@ -544,8 +582,10 @@
           prices: {},
           priceFlash: {},
           lastUpdated: null,
+          isEditMode: false,
           isLoading: false,
           loadError: "",
+          priceError: "",
           isSaving: false,
 
           groupModal: { isEdit: false, id: null, name: "" },
@@ -575,8 +615,9 @@
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
                 : null;
-            } catch {
-              // prices unavailable, show groups without price data
+              this.priceError = "";
+            } catch (e) {
+              this.priceError = e?.message || "价格加载失败";
             } finally {
               this.isLoading = false;
             }
@@ -603,13 +644,14 @@
               this.lastUpdated = priceResult.updatedAt
                 ? new Date(priceResult.updatedAt)
                 : null;
+              this.priceError = "";
 
               if (Object.keys(flashes).length > 0) {
                 this.priceFlash = flashes;
                 setTimeout(() => { this.priceFlash = {}; }, 1200);
               }
             } catch (e) {
-              toast("价格更新失败", "error");
+              this.priceError = e?.message || "价格更新失败";
             }
           },
 
@@ -625,6 +667,12 @@
               this.isSaving = false;
             }
             return success;
+          },
+
+          // --- Mode ---
+
+          toggleEditMode() {
+            this.isEditMode = !this.isEditMode;
           },
 
           // --- Group actions ---

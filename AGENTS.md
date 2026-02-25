@@ -49,7 +49,7 @@
 
 - **读操作（GET/查询）**：
   - 初始加载：使用 `skeleton` 或 `loading-spinner`。
-  - 失败：使用页面内联错误块（`alert-error`）+ 重试按钮。
+  - 失败：禁止使用 `alert-error`（含全页或跨模块错误块）；错误反馈必须在发起该读取请求的数据模块内就地显示，且仅允许“简短错误文案”和/或“重试按钮”。
 - **写操作（POST/PUT/PATCH/DELETE）**：
   - 成功/失败反馈统一使用页面内联提示（可用 DaisyUI `alert`）。
   - 提交按钮必须有 loading 态并 `disabled`。
