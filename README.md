@@ -17,3 +17,4 @@ curl --request GET \
   price_change_percentage_24h 24小时涨跌
   ath 历史最高价
   "ath_change_percentage": -4.77063,
+- 面板排序、自定义顺序，面板顺序可调整
