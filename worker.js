@@ -1,4 +1,4 @@
-const PRICE_CACHE_TTL = 120;
+const PRICE_CACHE_TTL = 60;
 const KV_GROUPS = "groups";
 const KV_PRICES_CACHE = "prices_cache";
 

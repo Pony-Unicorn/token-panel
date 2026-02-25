@@ -22,15 +22,15 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
     <style>
       @keyframes flash-up {
-        0%, 30% { background-color: oklch(var(--su) / 0.25); }
-        100% { background-color: transparent; }
+        0%, 50% { color: oklch(var(--su)); }
+        100%    { color: inherit; }
       }
       @keyframes flash-down {
-        0%, 30% { background-color: oklch(var(--er) / 0.25); }
-        100% { background-color: transparent; }
+        0%, 50% { color: oklch(var(--er)); }
+        100%    { color: inherit; }
       }
-      .price-flash-up   { animation: flash-up   0.9s ease-out forwards; border-radius: 4px; }
-      .price-flash-down { animation: flash-down 0.9s ease-out forwards; border-radius: 4px; }
+      .price-flash-up   { animation: flash-up   1.2s ease-out forwards; }
+      .price-flash-down { animation: flash-down 1.2s ease-out forwards; }
     </style>
   </head>
   <body class="min-h-screen bg-base-200">
@@ -311,10 +311,10 @@
                     </div>
 
                     <!-- Price + 24hr -->
-                    <div class="text-right min-w-0 px-1"
-                         :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''">
+                    <div class="text-right min-w-0">
                       <div
                         class="text-sm font-mono font-semibold leading-snug tabular-nums"
+                        :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''"
                         x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"
                       ></div>
                       <div
@@ -554,7 +554,7 @@
 
           async init() {
             await this.loadData();
-            setInterval(() => this.refreshPrices(), 60 * 1000);
+            setInterval(() => this.refreshPrices(), 10 * 1000);
           },
 
           async loadData() {
@@ -606,7 +606,7 @@
 
               if (Object.keys(flashes).length > 0) {
                 this.priceFlash = flashes;
-                setTimeout(() => { this.priceFlash = {}; }, 900);
+                setTimeout(() => { this.priceFlash = {}; }, 1200);
               }
             } catch (e) {
               toast("价格更新失败", "error");
