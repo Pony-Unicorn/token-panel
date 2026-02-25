@@ -12,21 +12,16 @@
       "secret_name": "LCW_API_KEY"
     }
   ],
-  "ratelimits": [
-    {
-      "name": "MY_RATE_LIMITER",
-      // An identifier you define, that is unique to your Cloudflare account.
-      // Must be an integer.
-      "namespace_id": "1001",
-      // Limit: the number of tokens allowed within a given period in a single
-      // Cloudflare location
-      // Period: the duration of the period, in seconds. Must be either 10 or 60
-      "simple": {
-        "limit": 30,
-        "period": 60
-      }
-    }
-  ],
+  // "ratelimits": [
+  //   {
+  //     "name": "MY_RATE_LIMITER",
+  //     "namespace_id": "1001",
+  //     "simple": {
+  //       "limit": 30,
+  //       "period": 60
+  //     }
+  //   }
+  // ],
   "routes": [
     {
       "pattern": "tpp.testbug.cc",
@@ -38,5 +33,20 @@
       "binding": "KV",
       "id": "8ad1e2a3f7c3432b9057e391ea727af2"
     }
-  ]
+  ],
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  }
 }

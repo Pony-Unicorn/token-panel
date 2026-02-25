@@ -4,13 +4,13 @@ const KV_PRICES_CACHE = "prices_cache";
 
 export default {
   async fetch(request, env) {
-    const ipAddress = req.headers.get("cf-connecting-ip") || "";
-    const { success } = await env.MY_RATE_LIMITER.limit({ key: ipAddress });
-    if (!success) {
-      return new Response("429 Failure rate limit exceeded", {
-        status: 429,
-      });
-    }
+    // const ipAddress = req.headers.get("cf-connecting-ip") || "";
+    // const { success } = await env.MY_RATE_LIMITER.limit({ key: ipAddress });
+    // if (!success) {
+    //   return new Response("429 Failure rate limit exceeded", {
+    //     status: 429,
+    //   });
+    // }
 
     const { pathname } = new URL(request.url);
     const method = request.method;
