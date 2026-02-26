@@ -280,25 +280,25 @@
                     <!-- Rank -->
                     <span
                       class="text-[11px] text-base-content/35 text-right tabular-nums"
-                      x-text="prices[coin]?.rank ?? '—'"
+                      x-text="prices[coin]?.market_cap_rank ?? '—'"
                     ></span>
 
                     <!-- Logo -->
                     <div
                       class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
-                      :style="prices[coin]?.color ? 'background:' + prices[coin].color + '22' : 'background:oklch(var(--b3))'"
+                      style="background:oklch(var(--b3))"
                     >
-                      <template x-if="prices[coin]?.png32">
+                      <template x-if="prices[coin]?.image">
                         <img
-                          :src="prices[coin].png32"
+                          :src="prices[coin].image"
                           :alt="coin"
                           class="w-full h-full object-contain p-0.5"
                         />
                       </template>
-                      <template x-if="!prices[coin]?.png32">
+                      <template x-if="!prices[coin]?.image">
                         <span
                           class="text-[9px] font-bold text-base-content/50"
-                          x-text="coin.replaceAll('_', '').slice(0,2)"
+                          x-text="(prices[coin]?.symbol?.toUpperCase() ?? coin).slice(0, 2)"
                         ></span>
                       </template>
                     </div>
@@ -307,12 +307,12 @@
                     <div class="min-w-0">
                       <div
                         class="text-sm font-semibold leading-snug truncate"
-                        x-text="prices[coin]?.name ?? coin.replaceAll('_', '')"
+                        x-text="prices[coin]?.name ?? coin"
                       ></div>
                       <div class="flex gap-1.5 items-center mt-0.5">
                         <span
                           class="text-xs font-mono text-base-content/45 leading-none tabular-nums"
-                          x-text="prices[coin]?.allTimeHighUSD ? formatPrice(prices[coin].allTimeHighUSD) : '—'"
+                          x-text="prices[coin]?.ath ? formatPrice(prices[coin].ath) : '—'"
                         ></span>
                         <span
                           class="text-xs leading-none tabular-nums"
@@ -327,12 +327,12 @@
                       <div
                         class="text-sm font-mono font-semibold leading-snug tabular-nums"
                         :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''"
-                        x-text="prices[coin] ? formatPrice(prices[coin].rate) : '—'"
+                        x-text="prices[coin] ? formatPrice(prices[coin].current_price) : '—'"
                       ></div>
                       <div
                         class="text-xs leading-none tabular-nums mt-0.5"
-                        :class="prices[coin]?.delta?.day != null ? deltaClass(prices[coin].delta.day) : 'text-base-content/30'"
-                        x-text="prices[coin]?.delta?.day != null ? formatDelta(prices[coin].delta.day) : '—'"
+                        :class="prices[coin]?.price_change_percentage_24h != null ? deltaClass(prices[coin].price_change_percentage_24h) : 'text-base-content/30'"
+                        x-text="prices[coin]?.price_change_percentage_24h != null ? formatDelta(prices[coin].price_change_percentage_24h) : '—'"
                       ></div>
                     </div>
 
@@ -457,32 +457,48 @@
       <dialog x-ref="coinModal" class="modal">
         <div class="modal-box">
           <h3 class="text-lg font-bold mb-4">添加代币</h3>
-          <input
-            type="text"
-            class="input input-bordered w-full"
-            placeholder="代币符号，如 BTC、ETH、SOL"
-            x-model="coinModal.symbol"
-            @keydown.enter="confirmCoin()"
-          />
-          <div class="modal-action">
-            <button
-              class="btn btn-ghost"
-              :disabled="isSaving"
-              @click="$refs.coinModal.close()"
-            >
-              取消
-            </button>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              class="input input-bordered flex-1"
+              placeholder="搜索代币名称或符号"
+              x-model="coinModal.query"
+              @keydown.enter="searchCoins()"
+            />
             <button
               class="btn btn-primary"
-              :disabled="isSaving"
-              @click="confirmCoin()"
+              :disabled="coinModal.isSearching"
+              @click="searchCoins()"
             >
-              <span
-                x-show="isSaving"
-                class="loading loading-spinner loading-sm"
-              ></span>
-              确认
+              <span x-show="coinModal.isSearching" class="loading loading-spinner loading-sm"></span>
+              <span x-show="!coinModal.isSearching">搜索</span>
             </button>
+          </div>
+
+          <!-- Search error -->
+          <template x-if="coinModal.searchError">
+            <p class="text-sm text-base-content/50 mt-2" x-text="coinModal.searchError"></p>
+          </template>
+
+          <!-- Results -->
+          <div class="mt-3 flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+            <template x-for="result in coinModal.results" :key="result.id">
+              <button
+                class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-base-200 transition-colors text-left w-full"
+                :disabled="isSaving"
+                @click="selectCoin(result.id)"
+              >
+                <img :src="result.thumb" :alt="result.name" class="w-7 h-7 rounded-full flex-shrink-0" />
+                <span class="text-sm font-semibold truncate" x-text="result.name"></span>
+                <span class="text-xs text-base-content/40 flex-shrink-0" x-text="result.symbol"></span>
+                <span class="text-xs text-base-content/30 ml-auto flex-shrink-0" x-text="result.market_cap_rank ? '#' + result.market_cap_rank : ''"></span>
+                <span x-show="isSaving" class="loading loading-spinner loading-xs flex-shrink-0"></span>
+              </button>
+            </template>
+          </div>
+
+          <div class="modal-action">
+            <button class="btn btn-ghost" @click="$refs.coinModal.close()">取消</button>
           </div>
         </div>
         <form method="dialog" class="modal-backdrop">
@@ -518,14 +534,29 @@
           <button>close</button>
         </form>
       </dialog>
+
+      <!-- Footer -->
+      <footer class="border-t border-base-300 bg-base-100">
+        <div class="max-w-screen-2xl mx-auto px-3 sm:px-6 py-5 text-sm opacity-70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p>© <span x-text="new Date().getFullYear()"></span> Token Panel</p>
+          <p>
+            Powered by
+            <a
+              href="https://www.coingecko.com/en/api/?utm_source=token-panel&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline underline-offset-2 hover:text-primary transition-colors"
+            >CoinGecko API</a>
+          </p>
+        </div>
+      </footer>
     </div>
 
     <script>
       // --- API helpers (native fetch) ---
-      const API_BASE_URL = "";
-      // const API_BASE_URL = "https://corsproxy.io/?url=https://tpp.testbug.cc";
+      // const API_BASE_URL = "";
+      const API_BASE_URL = "https://corsproxy.io/?url=https://tpp.testbug.cc";
       const groupsUrl = `${API_BASE_URL}/api/groups`;
-      const pricesUrl = `${API_BASE_URL}/api/prices`;
 
       const groupApi = {
         getAll() {
@@ -545,12 +576,18 @@
         },
       };
 
-      const priceApi = {
-        getAll() {
-          return fetch(pricesUrl).then((r) => {
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            return r.json();
-          });
+      // --- CoinGecko API ---
+      const CG_BASE = "https://api.coingecko.com/api/v3";
+      const coingeckoApi = {
+        search(query) {
+          return fetch(`${CG_BASE}/search?query=${encodeURIComponent(query)}`)
+            .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then((d) => d.coins.slice(0, 8));
+        },
+        getMarkets(ids) {
+          if (!ids.length) return Promise.resolve([]);
+          return fetch(`${CG_BASE}/coins/markets?vs_currency=usd&ids=${ids.join(",")}&price_change_percentage=24h`)
+            .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
         },
       };
 
@@ -589,7 +626,7 @@
           isSaving: false,
 
           groupModal: { isEdit: false, id: null, name: "" },
-          coinModal: { groupId: null, symbol: "" },
+          coinModal: { groupId: null, query: "", results: [], isSearching: false, searchError: "" },
           confirmDeleteModal: { groupId: null },
 
           async init() {
@@ -608,13 +645,12 @@
               return;
             }
             try {
-              const priceResult = await priceApi.getAll();
-              this.prices = Object.fromEntries(
-                (priceResult.data ?? []).map((c) => [c.code, c]),
-              );
-              this.lastUpdated = priceResult.updatedAt
-                ? new Date(priceResult.updatedAt)
-                : null;
+              const ids = [...new Set(this.groups.flatMap((g) => g.coins))];
+              if (ids.length) {
+                const data = await coingeckoApi.getMarkets(ids);
+                this.prices = Object.fromEntries(data.map((c) => [c.id, c]));
+                this.lastUpdated = data[0]?.last_updated ? new Date(data[0].last_updated) : new Date();
+              }
               this.priceError = "";
             } catch (e) {
               this.priceError = e?.message || "价格加载失败";
@@ -624,26 +660,24 @@
           },
 
           async refreshPrices() {
+            const ids = [...new Set(this.groups.flatMap((g) => g.coins))];
+            if (!ids.length) return;
             try {
               const oldPrices = this.prices;
-              const priceResult = await priceApi.getAll();
-              const newPrices = Object.fromEntries(
-                (priceResult.data ?? []).map((c) => [c.code, c]),
-              );
+              const data = await coingeckoApi.getMarkets(ids);
+              const newPrices = Object.fromEntries(data.map((c) => [c.id, c]));
 
               const flashes = {};
-              for (const coin of Object.keys(newPrices)) {
-                const oldRate = oldPrices[coin]?.rate;
-                const newRate = newPrices[coin]?.rate;
+              for (const id of Object.keys(newPrices)) {
+                const oldRate = oldPrices[id]?.current_price;
+                const newRate = newPrices[id]?.current_price;
                 if (oldRate != null && newRate != null && oldRate !== newRate) {
-                  flashes[coin] = newRate > oldRate ? "up" : "down";
+                  flashes[id] = newRate > oldRate ? "up" : "down";
                 }
               }
 
               this.prices = newPrices;
-              this.lastUpdated = priceResult.updatedAt
-                ? new Date(priceResult.updatedAt)
-                : null;
+              this.lastUpdated = data[0]?.last_updated ? new Date(data[0].last_updated) : new Date();
               this.priceError = "";
 
               if (Object.keys(flashes).length > 0) {
@@ -724,23 +758,36 @@
           // --- Coin actions ---
 
           openAddCoin(groupId) {
-            this.coinModal = { groupId, symbol: "" };
+            this.coinModal = { groupId, query: "", results: [], isSearching: false, searchError: "" };
             this.$refs.coinModal.showModal();
           },
 
-          async confirmCoin() {
-            const symbol = this.coinModal.symbol.trim().toUpperCase();
-            if (!symbol) return;
-            const g = this.groups.find((g) => g.id === this.coinModal.groupId);
-            if (g && !g.coins.includes(symbol)) {
-              g.coins.push(symbol);
-              this.$refs.coinModal.close();
-              await this.saveGroups();
-              await this.refreshPrices();
-            } else {
-              this.$refs.coinModal.close();
-              if (g) toast("该代币已在看板中", "warning");
+          async searchCoins() {
+            const q = this.coinModal.query.trim();
+            if (!q) return;
+            this.coinModal.isSearching = true;
+            this.coinModal.searchError = "";
+            this.coinModal.results = [];
+            try {
+              this.coinModal.results = await coingeckoApi.search(q);
+            } catch (e) {
+              this.coinModal.searchError = e?.message || "搜索失败";
+            } finally {
+              this.coinModal.isSearching = false;
             }
+          },
+
+          async selectCoin(coinId) {
+            const g = this.groups.find((g) => g.id === this.coinModal.groupId);
+            if (!g) return;
+            if (g.coins.includes(coinId)) {
+              toast("该代币已在看板中", "warning");
+              return;
+            }
+            g.coins.push(coinId);
+            this.$refs.coinModal.close();
+            await this.saveGroups();
+            await this.refreshPrices();
           },
 
           async removeCoin(groupId, symbol) {
@@ -762,28 +809,25 @@
             return "$" + price.toPrecision(4);
           },
 
-          formatDelta(delta) {
-            if (delta == null) return "—";
-            const pct = ((delta - 1) * 100).toFixed(2);
-            return (delta >= 1 ? "+" : "") + pct + "%";
+          formatDelta(pct) {
+            if (pct == null) return "—";
+            return (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%";
           },
 
-          deltaClass(delta) {
-            if (delta == null) return "text-base-content/40";
-            return delta >= 1 ? "text-success" : "text-error";
+          deltaClass(pct) {
+            if (pct == null) return "text-base-content/40";
+            return pct >= 0 ? "text-success" : "text-error";
           },
 
           formatAthDd(p) {
-            if (!p?.rate || !p?.allTimeHighUSD) return "—";
-            const dd = (p.rate / p.allTimeHighUSD - 1) * 100;
+            if (!p?.current_price || !p?.ath) return "—";
+            const dd = (p.current_price / p.ath - 1) * 100;
             return dd.toFixed(1) + "%";
           },
 
           athDdClass(p) {
-            if (!p?.rate || !p?.allTimeHighUSD) return "text-base-content/40";
-            return p.rate >= p.allTimeHighUSD
-              ? "text-success"
-              : "text-error/70";
+            if (!p?.current_price || !p?.ath) return "text-base-content/40";
+            return p.current_price >= p.ath ? "text-success" : "text-error/70";
           },
 
           formatMarketCap(cap) {
