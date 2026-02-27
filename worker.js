@@ -55,23 +55,14 @@ export default {
     if (pathname.startsWith("/api/v3/") && request.method === "GET") {
       const url = new URL(request.url);
       const targetUrl = "https://api.coingecko.com" + url.pathname + url.search;
-      const proxyHeaders = new Headers(request.headers);
-      proxyHeaders.delete("host");
       const origin = await fetch(targetUrl, {
-        headers: proxyHeaders,
         cf: {
           cacheEverything: true,
+          cacheKey: targetUrl,
           cacheTtlByStatus: { "200-299": 60, "400-499": 0, "500-599": 0 },
         },
       });
-      return new Response(origin.body, {
-        status: origin.status,
-        headers: {
-          "Content-Type":
-            origin.headers.get("Content-Type") ?? "application/json",
-          ...CORS_HEADERS,
-        },
-      });
+      return origin;
     }
 
     return new Response("Not Found.", { status: 404 });
