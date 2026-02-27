@@ -55,9 +55,12 @@ export default {
     if (pathname.startsWith("/api/v3/")) {
       const url = new URL(request.url);
       const targetUrl = "https://api.coingecko.com" + url.pathname + url.search;
+      const proxyHeaders = new Headers(request.headers);
+      proxyHeaders.delete("host");
       const response = await fetch(targetUrl, {
         method: request.method,
-        headers: { Accept: "application/json" },
+        headers: proxyHeaders,
+        body: ["GET", "HEAD"].includes(request.method) ? null : request.body,
       });
       return new Response(response.body, {
         status: response.status,
