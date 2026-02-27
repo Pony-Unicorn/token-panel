@@ -5,13 +5,13 @@
   "assets": {
     "directory": "./"
   },
-  "secrets_store_secrets": [
-    {
-      "binding": "SECRETS_LCW_API_KEY",
-      "store_id": "ef38c2f104874fcaaa19e726b9446db5",
-      "secret_name": "LCW_API_KEY"
-    }
-  ],
+  // "secrets_store_secrets": [
+  //   {
+  //     "binding": "SECRETS_LCW_API_KEY",
+  //     "store_id": "ef38c2f104874fcaaa19e726b9446db5",
+  //     "secret_name": "LCW_API_KEY"
+  //   }
+  // ],
   // "ratelimits": [
   //   {
   //     "name": "MY_RATE_LIMITER",
