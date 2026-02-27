@@ -40,10 +40,10 @@
         }
       }
       .price-flash-up {
-        animation: flash-up 1.2s ease-out forwards;
+        animation: flash-up 2s ease-out forwards;
       }
       .price-flash-down {
-        animation: flash-down 1.2s ease-out forwards;
+        animation: flash-down 2s ease-out forwards;
       }
     </style>
   </head>
@@ -772,7 +772,7 @@
                 this.priceFlash = flashes;
                 setTimeout(() => {
                   this.priceFlash = {};
-                }, 1200);
+                }, 2000);
               }
             } catch (e) {
               this.priceError = e?.message || "价格更新失败";
