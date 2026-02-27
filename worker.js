@@ -56,6 +56,7 @@ export default {
       const url = new URL(request.url);
       const targetUrl = "https://api.coingecko.com" + url.pathname + url.search;
       const origin = await fetch(targetUrl, {
+        headers: request.headers,
         cf: {
           cacheEverything: true,
           cacheKey: targetUrl,
