@@ -24,7 +24,7 @@
       @keyframes flash-up {
         0%,
         50% {
-          color: oklch(var(--su));
+          color: var(--color-success);
         }
         100% {
           color: inherit;
@@ -33,7 +33,7 @@
       @keyframes flash-down {
         0%,
         50% {
-          color: oklch(var(--er));
+          color: var(--color-error);
         }
         100% {
           color: inherit;
@@ -319,7 +319,7 @@
                     <!-- Logo -->
                     <div
                       class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
-                      style="background: oklch(var(--b3))"
+                      style="background: var(--color-base-300)"
                     >
                       <template x-if="prices[coin]?.image">
                         <img
