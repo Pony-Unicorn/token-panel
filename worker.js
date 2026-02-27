@@ -58,31 +58,26 @@ export default {
       const cacheKey = new Request(targetUrl);
       const cache = caches.default;
 
-      let response = await cache.match(cacheKey);
-      if (!response) {
-        const proxyHeaders = new Headers(request.headers);
-        proxyHeaders.delete("host");
-        const origin = await fetch(targetUrl, { headers: proxyHeaders });
-        response = new Response(origin.body, {
-          status: origin.status,
-          headers: {
-            "Content-Type": origin.headers.get("Content-Type") ?? "application/json",
-            "Cache-Control": "public, max-age=60",
-            ...CORS_HEADERS,
-          },
-        });
-        if (origin.status === 200) {
-          await cache.put(cacheKey, response.clone());
-        }
-      } else {
-        response = new Response(response.body, {
-          status: response.status,
-          headers: { ...Object.fromEntries(response.headers), ...CORS_HEADERS },
-        });
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
+
+      const proxyHeaders = new Headers(request.headers);
+      proxyHeaders.delete("host");
+      const origin = await fetch(targetUrl, { headers: proxyHeaders });
+      const response = new Response(origin.body, {
+        status: origin.status,
+        headers: {
+          "Content-Type": origin.headers.get("Content-Type") ?? "application/json",
+          "Cache-Control": "public, max-age=60",
+          ...CORS_HEADERS,
+        },
+      });
+      if (origin.status === 200) {
+        await cache.put(cacheKey, response.clone());
       }
       return response;
     }
 
-    return new Response("Not Found.", { status: 404, headers: CORS_HEADERS });
+    return new Response("Not Found.", { status: 404 });
   },
 };
