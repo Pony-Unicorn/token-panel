@@ -22,15 +22,29 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.19/dayjs.min.js"></script>
     <style>
       @keyframes flash-up {
-        0%, 50% { color: oklch(var(--su)); }
-        100%    { color: inherit; }
+        0%,
+        50% {
+          color: oklch(var(--su));
+        }
+        100% {
+          color: inherit;
+        }
       }
       @keyframes flash-down {
-        0%, 50% { color: oklch(var(--er)); }
-        100%    { color: inherit; }
+        0%,
+        50% {
+          color: oklch(var(--er));
+        }
+        100% {
+          color: inherit;
+        }
       }
-      .price-flash-up   { animation: flash-up   1.2s ease-out forwards; }
-      .price-flash-down { animation: flash-down 1.2s ease-out forwards; }
+      .price-flash-up {
+        animation: flash-up 1.2s ease-out forwards;
+      }
+      .price-flash-down {
+        animation: flash-down 1.2s ease-out forwards;
+      }
     </style>
   </head>
   <body class="min-h-screen bg-base-200">
@@ -140,7 +154,9 @@
 
         <!-- Load error -->
         <template x-if="!isLoading && loadError">
-          <div class="flex flex-col items-center justify-center w-full h-64 gap-2 text-base-content/60">
+          <div
+            class="flex flex-col items-center justify-center w-full h-64 gap-2 text-base-content/60"
+          >
             <span class="text-sm" x-text="loadError"></span>
             <button class="btn btn-sm" @click="loadData()">重试</button>
           </div>
@@ -173,7 +189,9 @@
 
         <!-- Price error -->
         <template x-if="priceError">
-          <div class="w-full flex items-center gap-2 text-sm text-base-content/50">
+          <div
+            class="w-full flex items-center gap-2 text-sm text-base-content/50"
+          >
             <span x-text="priceError"></span>
             <button class="btn btn-xs" @click="refreshPrices()">重试</button>
           </div>
@@ -286,7 +304,7 @@
                     <!-- Logo -->
                     <div
                       class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
-                      style="background:oklch(var(--b3))"
+                      style="background: oklch(var(--b3))"
                     >
                       <template x-if="prices[coin]?.image">
                         <img
@@ -470,14 +488,20 @@
               :disabled="coinModal.isSearching"
               @click="searchCoins()"
             >
-              <span x-show="coinModal.isSearching" class="loading loading-spinner loading-sm"></span>
+              <span
+                x-show="coinModal.isSearching"
+                class="loading loading-spinner loading-sm"
+              ></span>
               <span x-show="!coinModal.isSearching">搜索</span>
             </button>
           </div>
 
           <!-- Search error -->
           <template x-if="coinModal.searchError">
-            <p class="text-sm text-base-content/50 mt-2" x-text="coinModal.searchError"></p>
+            <p
+              class="text-sm text-base-content/50 mt-2"
+              x-text="coinModal.searchError"
+            ></p>
           </template>
 
           <!-- Results -->
@@ -488,17 +512,35 @@
                 :disabled="isSaving"
                 @click="selectCoin(result.id)"
               >
-                <img :src="result.thumb" :alt="result.name" class="w-7 h-7 rounded-full flex-shrink-0" />
-                <span class="text-sm font-semibold truncate" x-text="result.name"></span>
-                <span class="text-xs text-base-content/40 flex-shrink-0" x-text="result.symbol"></span>
-                <span class="text-xs text-base-content/30 ml-auto flex-shrink-0" x-text="result.market_cap_rank ? '#' + result.market_cap_rank : ''"></span>
-                <span x-show="isSaving" class="loading loading-spinner loading-xs flex-shrink-0"></span>
+                <img
+                  :src="result.thumb"
+                  :alt="result.name"
+                  class="w-7 h-7 rounded-full flex-shrink-0"
+                />
+                <span
+                  class="text-sm font-semibold truncate"
+                  x-text="result.name"
+                ></span>
+                <span
+                  class="text-xs text-base-content/40 flex-shrink-0"
+                  x-text="result.symbol"
+                ></span>
+                <span
+                  class="text-xs text-base-content/30 ml-auto flex-shrink-0"
+                  x-text="result.market_cap_rank ? '#' + result.market_cap_rank : ''"
+                ></span>
+                <span
+                  x-show="isSaving"
+                  class="loading loading-spinner loading-xs flex-shrink-0"
+                ></span>
               </button>
             </template>
           </div>
 
           <div class="modal-action">
-            <button class="btn btn-ghost" @click="$refs.coinModal.close()">取消</button>
+            <button class="btn btn-ghost" @click="$refs.coinModal.close()">
+              取消
+            </button>
           </div>
         </div>
         <form method="dialog" class="modal-backdrop">
@@ -537,7 +579,9 @@
 
       <!-- Footer -->
       <footer class="border-t border-base-300 bg-base-100">
-        <div class="max-w-screen-2xl mx-auto px-3 sm:px-6 py-5 text-sm opacity-70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div
+          class="max-w-screen-2xl mx-auto px-3 sm:px-6 py-5 text-sm opacity-70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+        >
           <p>© <span x-text="new Date().getFullYear()"></span> Token Panel</p>
           <p>
             Powered by
@@ -546,7 +590,8 @@
               target="_blank"
               rel="noopener noreferrer"
               class="underline underline-offset-2 hover:text-primary transition-colors"
-            >CoinGecko API</a>
+              >CoinGecko API</a
+            >
           </p>
         </div>
       </footer>
@@ -554,9 +599,9 @@
 
     <script>
       // --- API helpers (native fetch) ---
-      const API_BASE_URL = "";
-      // const API_BASE_URL = "https://corsproxy.io/?url=https://tpp.testbug.cc";
+      const API_BASE_URL = "https://tpp.testbug.cc";
       const groupsUrl = `${API_BASE_URL}/api/groups`;
+      const CG_BASE = `${API_BASE_URL}/api/v3`;
 
       const groupApi = {
         getAll() {
@@ -577,17 +622,23 @@
       };
 
       // --- CoinGecko API ---
-      const CG_BASE = "https://api.coingecko.com/api/v3";
       const coingeckoApi = {
         search(query) {
           return fetch(`${CG_BASE}/search?query=${encodeURIComponent(query)}`)
-            .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then((r) => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            })
             .then((d) => d.coins.slice(0, 8));
         },
         getMarkets(ids) {
           if (!ids.length) return Promise.resolve([]);
-          return fetch(`${CG_BASE}/coins/markets?vs_currency=usd&ids=${ids.join(",")}&price_change_percentage=24h`)
-            .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+          return fetch(
+            `${CG_BASE}/coins/markets?vs_currency=usd&ids=${ids.join(",")}&price_change_percentage=24h`,
+          ).then((r) => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+          });
         },
       };
 
@@ -626,7 +677,13 @@
           isSaving: false,
 
           groupModal: { isEdit: false, id: null, name: "" },
-          coinModal: { groupId: null, query: "", results: [], isSearching: false, searchError: "" },
+          coinModal: {
+            groupId: null,
+            query: "",
+            results: [],
+            isSearching: false,
+            searchError: "",
+          },
           confirmDeleteModal: { groupId: null },
 
           async init() {
@@ -649,7 +706,9 @@
               if (ids.length) {
                 const data = await coingeckoApi.getMarkets(ids);
                 this.prices = Object.fromEntries(data.map((c) => [c.id, c]));
-                this.lastUpdated = data[0]?.last_updated ? new Date(data[0].last_updated) : new Date();
+                this.lastUpdated = data[0]?.last_updated
+                  ? new Date(data[0].last_updated)
+                  : new Date();
               }
               this.priceError = "";
             } catch (e) {
@@ -677,12 +736,16 @@
               }
 
               this.prices = newPrices;
-              this.lastUpdated = data[0]?.last_updated ? new Date(data[0].last_updated) : new Date();
+              this.lastUpdated = data[0]?.last_updated
+                ? new Date(data[0].last_updated)
+                : new Date();
               this.priceError = "";
 
               if (Object.keys(flashes).length > 0) {
                 this.priceFlash = flashes;
-                setTimeout(() => { this.priceFlash = {}; }, 1200);
+                setTimeout(() => {
+                  this.priceFlash = {};
+                }, 1200);
               }
             } catch (e) {
               this.priceError = e?.message || "价格更新失败";
@@ -758,7 +821,13 @@
           // --- Coin actions ---
 
           openAddCoin(groupId) {
-            this.coinModal = { groupId, query: "", results: [], isSearching: false, searchError: "" };
+            this.coinModal = {
+              groupId,
+              query: "",
+              results: [],
+              isSearching: false,
+              searchError: "",
+            };
             this.$refs.coinModal.showModal();
           },
 
