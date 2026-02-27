@@ -59,7 +59,31 @@
             class="text-xs text-base-content/40"
           ></span>
         </div>
-        <div class="flex-none">
+        <div class="flex-none gap-2 flex items-center">
+          <!-- Price error indicator -->
+          <div x-show="priceError" class="tooltip tooltip-bottom" :data-tip="priceError">
+            <button
+              class="btn btn-sm btn-ghost text-warning"
+              @click="refreshPrices()"
+              aria-label="价格加载失败，点击重试"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-4 h-4"
+                aria-hidden="true"
+              >
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                <path d="M12 9v4"></path>
+                <path d="M12 17h.01"></path>
+              </svg>
+            </button>
+          </div>
           <button
             class="btn btn-sm"
             :class="isEditMode ? 'btn-success' : 'btn-ghost'"
@@ -187,16 +211,6 @@
           </div>
         </template>
 
-        <!-- Price error -->
-        <template x-if="priceError">
-          <div
-            class="w-full flex items-center gap-2 text-sm text-base-content/50"
-          >
-            <span x-text="priceError"></span>
-            <button class="btn btn-xs" @click="refreshPrices()">重试</button>
-          </div>
-        </template>
-
         <!-- Board columns -->
         <template x-for="group in groups" :key="group.id">
           <div class="card bg-base-100 shadow w-full sm:w-80 flex-shrink-0">
@@ -293,7 +307,8 @@
 
                 <template x-for="coin in group.coins" :key="coin">
                   <div
-                    class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-center px-1 py-2.5 rounded-lg group/card hover:bg-base-200 transition-colors"
+                    class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-center px-1 py-2.5 rounded-lg group/card hover:bg-base-200 transition-colors cursor-pointer"
+                    @click="!isEditMode && window.open('https://www.coingecko.com/en/coins/' + coin + '?utm_source=token-panel&utm_medium=referral', '_blank')"
                   >
                     <!-- Rank -->
                     <span
