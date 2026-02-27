@@ -51,31 +51,27 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    // Proxy /api/v3/* to CoinGecko (GET only, with Cache API)
+    // Proxy /api/v3/* to CoinGecko (GET only, with cf cache)
     if (pathname.startsWith("/api/v3/") && request.method === "GET") {
       const url = new URL(request.url);
       const targetUrl = "https://api.coingecko.com" + url.pathname + url.search;
-      const cacheKey = new Request(targetUrl);
-      const cache = caches.default;
-
-      const cached = await cache.match(cacheKey);
-      if (cached) return cached;
-
       const proxyHeaders = new Headers(request.headers);
       proxyHeaders.delete("host");
-      const origin = await fetch(targetUrl, { headers: proxyHeaders });
-      const response = new Response(origin.body, {
+      const origin = await fetch(targetUrl, {
+        headers: proxyHeaders,
+        cf: {
+          cacheEverything: true,
+          cacheTtlByStatus: { "200-299": 60, "400-499": 0, "500-599": 0 },
+        },
+      });
+      return new Response(origin.body, {
         status: origin.status,
         headers: {
-          "Content-Type": origin.headers.get("Content-Type") ?? "application/json",
-          "Cache-Control": "public, max-age=60",
+          "Content-Type":
+            origin.headers.get("Content-Type") ?? "application/json",
           ...CORS_HEADERS,
         },
       });
-      if (origin.status === 200) {
-        await cache.put(cacheKey, response.clone());
-      }
-      return response;
     }
 
     return new Response("Not Found.", { status: 404 });
