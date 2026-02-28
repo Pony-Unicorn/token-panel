@@ -8,14 +8,6 @@ const CORS_HEADERS = {
 
 export default {
   async fetch(request, env) {
-    // const ipAddress = req.headers.get("cf-connecting-ip") || "";
-    // const { success } = await env.MY_RATE_LIMITER.limit({ key: ipAddress });
-    // if (!success) {
-    //   return new Response("429 Failure rate limit exceeded", {
-    //     status: 429,
-    //   });
-    // }
-
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -23,6 +15,20 @@ export default {
 
     const { pathname } = new URL(request.url);
     const method = request.method;
+
+    // GET /api
+    if (pathname === "/api" && method === "GET") {
+      // 直接从 Header 中提取邮箱
+      const userEmail = request.headers.get(
+        "Cf-Access-Authenticated-User-Email",
+      );
+
+      if (!userEmail) {
+        return new Response("未发现 Access 认证信息", { status: 401 });
+      }
+
+      return new Response(`你好，验证码登录用户: ${userEmail}`);
+    }
 
     // GET /api/groups
     if (pathname === "/api/groups" && method === "GET") {
