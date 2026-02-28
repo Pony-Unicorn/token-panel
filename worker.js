@@ -1,4 +1,4 @@
-const KV_GROUPS = "groups";
+const KV_GROUP = "group";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -16,23 +16,21 @@ export default {
     const { pathname } = new URL(request.url);
     const method = request.method;
 
+    const userEmail = request.headers.get("Cf-Access-Authenticated-User-Email");
+
     // GET /api
     if (pathname === "/api" && method === "GET") {
-      // 直接从 Header 中提取邮箱
-      const userEmail = request.headers.get(
-        "Cf-Access-Authenticated-User-Email",
-      );
-
       if (!userEmail) {
-        return new Response("未发现 Access 认证信息", { status: 401 });
+        return new Response("Missing access authentication.", { status: 401 });
       }
 
-      return new Response(`你好，验证码登录用户: ${userEmail}`);
+      return new Response(`User Email: ${userEmail}`);
     }
 
     // GET /api/groups
     if (pathname === "/api/groups" && method === "GET") {
-      const groups = (await env.KV.get(KV_GROUPS, "json")) ?? [];
+      const groups =
+        (await env.KV.get(`${KV_GROUP}-${userEmail}`, "json")) ?? [];
       return Response.json(groups, { headers: CORS_HEADERS });
     }
 
@@ -53,7 +51,7 @@ export default {
           headers: CORS_HEADERS,
         });
       }
-      await env.KV.put(KV_GROUPS, JSON.stringify(groups));
+      await env.KV.put(`${KV_GROUP}-${userEmail}`, JSON.stringify(groups));
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
