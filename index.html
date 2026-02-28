@@ -60,6 +60,20 @@
           ></span>
         </div>
         <div class="flex-none gap-2 flex items-center">
+          <!-- API mode toggle -->
+          <div
+            class="tooltip tooltip-bottom"
+            :data-tip="useDirectApi ? '直连 api.coingecko.com' : '后端代理'"
+          >
+            <button
+              class="btn btn-xs"
+              :class="useDirectApi ? 'btn-info btn-outline' : 'btn-ghost opacity-40'"
+              @click="toggleApiMode()"
+              aria-label="切换 API 模式"
+            >
+              <span x-text="useDirectApi ? 'Direct' : 'Proxy'"></span>
+            </button>
+          </div>
           <!-- Price error indicator -->
           <div x-show="priceError" class="tooltip tooltip-bottom" :data-tip="priceError">
             <button
@@ -628,7 +642,11 @@
       // --- API helpers (native fetch) ---
       const API_BASE_URL = "https://tpp.testbug.cc";
       const groupsUrl = `${API_BASE_URL}/api/groups`;
-      const CG_BASE = `${API_BASE_URL}/api/v3`;
+      let useDirectApi = localStorage.getItem("cgDirectApi") === "true";
+      const getCgBase = () =>
+        useDirectApi
+          ? "https://api.coingecko.com/api/v3"
+          : `${API_BASE_URL}/api/v3`;
 
       const groupApi = {
         getAll() {
@@ -651,7 +669,7 @@
       // --- CoinGecko API ---
       const coingeckoApi = {
         search(query) {
-          return fetch(`${CG_BASE}/search?query=${encodeURIComponent(query)}`)
+          return fetch(`${getCgBase()}/search?query=${encodeURIComponent(query)}`)
             .then((r) => {
               if (!r.ok) throw new Error(`HTTP ${r.status}`);
               return r.json();
@@ -661,7 +679,7 @@
         getMarkets(ids) {
           if (!ids.length) return Promise.resolve([]);
           return fetch(
-            `${CG_BASE}/coins/markets?vs_currency=usd&ids=${ids.join(",")}&price_change_percentage=24h`,
+            `${getCgBase()}/coins/markets?vs_currency=usd&ids=${ids.join(",")}&price_change_percentage=24h`,
           ).then((r) => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
@@ -698,6 +716,7 @@
           priceFlash: {},
           lastUpdated: null,
           isEditMode: false,
+          useDirectApi: localStorage.getItem("cgDirectApi") === "true",
           isLoading: false,
           loadError: "",
           priceError: "",
@@ -714,6 +733,7 @@
           confirmDeleteModal: { groupId: null },
 
           async init() {
+            useDirectApi = this.useDirectApi;
             await this.loadData();
             setInterval(() => this.refreshPrices(), 30 * 1000);
           },
@@ -797,6 +817,13 @@
 
           toggleEditMode() {
             this.isEditMode = !this.isEditMode;
+          },
+
+          toggleApiMode() {
+            this.useDirectApi = !this.useDirectApi;
+            useDirectApi = this.useDirectApi;
+            localStorage.setItem("cgDirectApi", String(this.useDirectApi));
+            this.refreshPrices();
           },
 
           // --- Group actions ---
