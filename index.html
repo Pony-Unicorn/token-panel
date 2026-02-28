@@ -60,20 +60,6 @@
           ></span>
         </div>
         <div class="flex-none gap-2 flex items-center">
-          <!-- API mode toggle -->
-          <div
-            class="tooltip tooltip-bottom"
-            :data-tip="useDirectApi ? '直连 api.coingecko.com' : '后端代理'"
-          >
-            <button
-              class="btn btn-xs"
-              :class="useDirectApi ? 'btn-info btn-outline' : 'btn-ghost opacity-40'"
-              @click="toggleApiMode()"
-              aria-label="切换 API 模式"
-            >
-              <span x-text="useDirectApi ? 'Direct' : 'Proxy'"></span>
-            </button>
-          </div>
           <!-- Price error indicator -->
           <div x-show="priceError" class="tooltip tooltip-bottom" :data-tip="priceError">
             <button
@@ -96,6 +82,20 @@
                 <path d="M12 9v4"></path>
                 <path d="M12 17h.01"></path>
               </svg>
+            </button>
+          </div>
+          <!-- API mode toggle -->
+          <div
+            class="tooltip tooltip-bottom"
+            :data-tip="useDirectApi ? '直连 api.coingecko.com' : '后端代理'"
+          >
+            <button
+              class="btn btn-xs"
+              :class="useDirectApi ? 'btn-info btn-outline' : 'btn-ghost opacity-40'"
+              @click="toggleApiMode()"
+              aria-label="切换 API 模式"
+            >
+              <span x-text="useDirectApi ? 'Direct' : 'Proxy'"></span>
             </button>
           </div>
           <button
