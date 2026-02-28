@@ -319,7 +319,7 @@
                   </div>
                 </template>
 
-                <template x-for="coin in group.coins" :key="coin">
+                <template x-for="coin in sortedCoins(group.coins)" :key="coin">
                   <div
                     class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-center px-1 py-2.5 rounded-lg group/card hover:bg-base-200 transition-colors cursor-pointer"
                     @click="!isEditMode && window.open('https://www.coingecko.com/en/coins/' + coin + '?utm_source=token-panel&utm_medium=referral', '_blank')"
@@ -918,6 +918,16 @@
             if (!g) return;
             g.coins = g.coins.filter((c) => c !== symbol);
             await this.saveGroups();
+          },
+
+          // --- Helpers ---
+
+          sortedCoins(coins) {
+            return [...coins].sort((a, b) => {
+              const ra = this.prices[a]?.market_cap_rank ?? Infinity;
+              const rb = this.prices[b]?.market_cap_rank ?? Infinity;
+              return ra - rb;
+            });
           },
 
           // --- Formatting ---
