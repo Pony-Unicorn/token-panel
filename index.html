@@ -731,6 +731,11 @@
             searchError: "",
           },
           confirmDeleteModal: { groupId: null },
+          futuresGainers: [],
+          futuresLosers: [],
+          futuresLoading: false,
+          futuresError: '',
+          futuresUpdatedAt: null,
 
           async init() {
             useDirectApi = this.useDirectApi;
