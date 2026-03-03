@@ -447,21 +447,16 @@
           </div>
         </template>
 
-        <!-- Futures Gainers/Losers Card -->
+        <!-- Futures Gainers Card -->
         <div class="card bg-base-100 shadow w-full sm:w-80 flex-shrink-0">
           <div class="card-body p-4 gap-3">
-            <!-- Header -->
             <div class="flex items-center justify-between">
-              <h2 class="font-bold text-base">合约涨跌幅榜</h2>
+              <h2 class="font-bold text-base">合约涨幅榜</h2>
               <span x-show="futuresLoading" class="loading loading-spinner loading-xs"></span>
             </div>
-
-            <!-- Error -->
             <template x-if="futuresError && !futuresLoading">
               <p class="text-xs text-error/70" x-text="futuresError"></p>
             </template>
-
-            <!-- Loading skeleton (first load only) -->
             <template x-if="futuresLoading && futuresGainers.length === 0">
               <div class="flex flex-col gap-2">
                 <template x-for="i in 5" :key="i">
@@ -469,11 +464,8 @@
                 </template>
               </div>
             </template>
-
-            <!-- Gainers -->
             <template x-if="futuresGainers.length > 0">
               <div class="flex flex-col gap-0">
-                <div class="text-[10px] font-semibold text-success/70 uppercase tracking-wide px-1 pb-1">涨幅榜</div>
                 <template x-for="(item, idx) in futuresGainers" :key="item.symbol">
                   <a
                     :href="'https://www.binance.com/futures/' + item.symbol + 'USDT'"
@@ -489,11 +481,33 @@
                 </template>
               </div>
             </template>
+            <template x-if="futuresUpdatedAt">
+              <div class="text-[10px] text-base-content/30 text-right">
+                更新于 <span x-text="dayjs(futuresUpdatedAt).format('HH:mm:ss')"></span>
+              </div>
+            </template>
+          </div>
+        </div>
 
-            <!-- Losers -->
+        <!-- Futures Losers Card -->
+        <div class="card bg-base-100 shadow w-full sm:w-80 flex-shrink-0">
+          <div class="card-body p-4 gap-3">
+            <div class="flex items-center justify-between">
+              <h2 class="font-bold text-base">合约跌幅榜</h2>
+              <span x-show="futuresLoading" class="loading loading-spinner loading-xs"></span>
+            </div>
+            <template x-if="futuresError && !futuresLoading">
+              <p class="text-xs text-error/70" x-text="futuresError"></p>
+            </template>
+            <template x-if="futuresLoading && futuresLosers.length === 0">
+              <div class="flex flex-col gap-2">
+                <template x-for="i in 5" :key="i">
+                  <div class="skeleton h-5 w-full rounded"></div>
+                </template>
+              </div>
+            </template>
             <template x-if="futuresLosers.length > 0">
               <div class="flex flex-col gap-0">
-                <div class="text-[10px] font-semibold text-error/70 uppercase tracking-wide px-1 pb-1 border-t border-base-300 pt-2">跌幅榜</div>
                 <template x-for="(item, idx) in futuresLosers" :key="item.symbol">
                   <a
                     :href="'https://www.binance.com/futures/' + item.symbol + 'USDT'"
@@ -509,8 +523,6 @@
                 </template>
               </div>
             </template>
-
-            <!-- Updated at -->
             <template x-if="futuresUpdatedAt">
               <div class="text-[10px] text-base-content/30 text-right">
                 更新于 <span x-text="dayjs(futuresUpdatedAt).format('HH:mm:ss')"></span>
