@@ -447,6 +447,78 @@
           </div>
         </template>
 
+        <!-- Futures Gainers/Losers Card -->
+        <div class="card bg-base-100 shadow w-full sm:w-80 flex-shrink-0">
+          <div class="card-body p-4 gap-3">
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+              <h2 class="font-bold text-base">合约涨跌幅榜</h2>
+              <span x-show="futuresLoading" class="loading loading-spinner loading-xs"></span>
+            </div>
+
+            <!-- Error -->
+            <template x-if="futuresError && !futuresLoading">
+              <p class="text-xs text-error/70" x-text="futuresError"></p>
+            </template>
+
+            <!-- Loading skeleton (first load only) -->
+            <template x-if="futuresLoading && futuresGainers.length === 0">
+              <div class="flex flex-col gap-2">
+                <template x-for="i in 5" :key="i">
+                  <div class="skeleton h-5 w-full rounded"></div>
+                </template>
+              </div>
+            </template>
+
+            <!-- Gainers -->
+            <template x-if="futuresGainers.length > 0">
+              <div class="flex flex-col gap-0">
+                <div class="text-[10px] font-semibold text-success/70 uppercase tracking-wide px-1 pb-1">涨幅榜</div>
+                <template x-for="(item, idx) in futuresGainers" :key="item.symbol">
+                  <a
+                    :href="'https://www.binance.com/futures/' + item.symbol + 'USDT'"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="grid grid-cols-[1.2rem_1fr_3.5rem_4rem] gap-x-2 items-center px-1 py-1.5 rounded-lg hover:bg-base-200 transition-colors"
+                  >
+                    <span class="text-[10px] text-base-content/35 text-right tabular-nums" x-text="idx + 1"></span>
+                    <span class="text-xs font-semibold truncate" x-text="item.symbol"></span>
+                    <span class="text-xs text-success font-mono tabular-nums text-right" x-text="'+' + item.change.toFixed(2) + '%'"></span>
+                    <span class="text-xs font-mono tabular-nums text-right text-base-content/60" x-text="item.price >= 1 ? '$' + item.price.toLocaleString('en-US', {maximumFractionDigits: 2}) : '$' + item.price.toPrecision(4)"></span>
+                  </a>
+                </template>
+              </div>
+            </template>
+
+            <!-- Losers -->
+            <template x-if="futuresLosers.length > 0">
+              <div class="flex flex-col gap-0">
+                <div class="text-[10px] font-semibold text-error/70 uppercase tracking-wide px-1 pb-1 border-t border-base-300 pt-2">跌幅榜</div>
+                <template x-for="(item, idx) in futuresLosers" :key="item.symbol">
+                  <a
+                    :href="'https://www.binance.com/futures/' + item.symbol + 'USDT'"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="grid grid-cols-[1.2rem_1fr_3.5rem_4rem] gap-x-2 items-center px-1 py-1.5 rounded-lg hover:bg-base-200 transition-colors"
+                  >
+                    <span class="text-[10px] text-base-content/35 text-right tabular-nums" x-text="idx + 1"></span>
+                    <span class="text-xs font-semibold truncate" x-text="item.symbol"></span>
+                    <span class="text-xs text-error font-mono tabular-nums text-right" x-text="item.change.toFixed(2) + '%'"></span>
+                    <span class="text-xs font-mono tabular-nums text-right text-base-content/60" x-text="item.price >= 1 ? '$' + item.price.toLocaleString('en-US', {maximumFractionDigits: 2}) : '$' + item.price.toPrecision(4)"></span>
+                  </a>
+                </template>
+              </div>
+            </template>
+
+            <!-- Updated at -->
+            <template x-if="futuresUpdatedAt">
+              <div class="text-[10px] text-base-content/30 text-right">
+                更新于 <span x-text="dayjs(futuresUpdatedAt).format('HH:mm:ss')"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <!-- New group card (edit mode only) -->
         <template x-if="isEditMode">
           <button
