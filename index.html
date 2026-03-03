@@ -687,6 +687,31 @@
         },
       };
 
+      // --- Binance Futures API ---
+      const binanceApi = {
+        getFutures24hTicker() {
+          return fetch('https://fapi.binance.com/fapi/v1/ticker/24hr')
+            .then((r) => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            })
+            .then((data) => {
+              const usdt = data
+                .filter((t) => t.symbol.endsWith('USDT'))
+                .map((t) => ({
+                  symbol: t.symbol.replace('USDT', ''),
+                  change: parseFloat(t.priceChangePercent),
+                  price: parseFloat(t.lastPrice),
+                }));
+              usdt.sort((a, b) => b.change - a.change);
+              return {
+                gainers: usdt.slice(0, 10),
+                losers: usdt.slice(-10).reverse(),
+              };
+            });
+        },
+      };
+
       let _alertTimer = null;
       const toast = (msg, type) => Alpine.store("alert")?.show(msg, type);
 
@@ -801,6 +826,21 @@
               }
             } catch (e) {
               this.priceError = e?.message || "价格更新失败";
+            }
+          },
+
+          async refreshFutures() {
+            this.futuresLoading = true;
+            this.futuresError = '';
+            try {
+              const { gainers, losers } = await binanceApi.getFutures24hTicker();
+              this.futuresGainers = gainers;
+              this.futuresLosers = losers;
+              this.futuresUpdatedAt = new Date();
+            } catch (e) {
+              this.futuresError = e?.message || '合约数据加载失败';
+            } finally {
+              this.futuresLoading = false;
             }
           },
 
