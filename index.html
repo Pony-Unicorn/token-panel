@@ -838,10 +838,8 @@
             useDirectApi = this.useDirectApi;
             await this.loadData();
             await this.refreshFutures();
-            setInterval(() => {
-              this.refreshPrices();
-              this.refreshFutures();
-            }, 30 * 1000);
+            setInterval(() => this.refreshPrices(), 30 * 1000);
+            setInterval(() => this.refreshFutures(), 5 * 60 * 1000);
           },
 
           async loadData() {
