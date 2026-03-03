@@ -781,7 +781,7 @@
             })
             .then((data) => {
               const usdt = data
-                .filter((t) => t.symbol.endsWith('USDT'))
+                .filter((t) => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) >= 1_000_000)
                 .map((t) => ({
                   symbol: t.symbol.replace('USDT', ''),
                   change: parseFloat(t.priceChangePercent),
