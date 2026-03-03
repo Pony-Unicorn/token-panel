@@ -772,7 +772,22 @@
       };
 
       // --- Binance Futures API ---
+      let _futureTradingSymbols = null;
       const binanceApi = {
+        loadTradingSymbols() {
+          return fetch('https://fapi.binance.com/fapi/v1/exchangeInfo')
+            .then((r) => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            })
+            .then((data) => {
+              _futureTradingSymbols = new Set(
+                data.symbols
+                  .filter((s) => s.status === 'TRADING' && s.symbol.endsWith('USDT'))
+                  .map((s) => s.symbol)
+              );
+            });
+        },
         getFutures24hTicker() {
           return fetch('https://fapi.binance.com/fapi/v1/ticker/24hr')
             .then((r) => {
@@ -781,7 +796,9 @@
             })
             .then((data) => {
               const usdt = data
-                .filter((t) => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) >= 1_000_000)
+                .filter((t) => _futureTradingSymbols
+                  ? _futureTradingSymbols.has(t.symbol)
+                  : t.symbol.endsWith('USDT'))
                 .map((t) => ({
                   symbol: t.symbol.replace('USDT', ''),
                   change: parseFloat(t.priceChangePercent),
@@ -848,7 +865,7 @@
 
           async init() {
             useDirectApi = this.useDirectApi;
-            await this.loadData();
+            await Promise.all([this.loadData(), binanceApi.loadTradingSymbols().catch(() => {})]);
             await this.refreshFutures();
             setInterval(() => this.refreshPrices(), 30 * 1000);
             setInterval(() => this.refreshFutures(), 5 * 60 * 1000);
