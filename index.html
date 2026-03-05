@@ -455,7 +455,12 @@
               <span x-show="futuresLoading" class="loading loading-spinner loading-xs"></span>
             </div>
             <template x-if="futuresError && !futuresLoading">
-              <p class="text-xs text-error/70" x-text="futuresError"></p>
+              <div class="flex flex-col gap-2">
+                <p class="text-xs text-error/70" x-text="futuresError"></p>
+                <template x-if="futuresSymbolsError">
+                  <button @click="retryFutures()" class="btn btn-xs btn-outline btn-error self-start">重新加载</button>
+                </template>
+              </div>
             </template>
             <template x-if="futuresLoading && futuresGainers.length === 0">
               <div class="flex flex-col gap-2">
@@ -497,7 +502,12 @@
               <span x-show="futuresLoading" class="loading loading-spinner loading-xs"></span>
             </div>
             <template x-if="futuresError && !futuresLoading">
-              <p class="text-xs text-error/70" x-text="futuresError"></p>
+              <div class="flex flex-col gap-2">
+                <p class="text-xs text-error/70" x-text="futuresError"></p>
+                <template x-if="futuresSymbolsError">
+                  <button @click="retryFutures()" class="btn btn-xs btn-outline btn-error self-start">重新加载</button>
+                </template>
+              </div>
             </template>
             <template x-if="futuresLoading && futuresLosers.length === 0">
               <div class="flex flex-col gap-2">
@@ -788,28 +798,31 @@
               );
             });
         },
-        loadTradingSymbolsWithRetry() {
-          return this.loadTradingSymbols().catch(() =>
-            new Promise((resolve) => setTimeout(resolve, 3000))
-              .then(() => this.loadTradingSymbols().catch(() => {}))
-          );
+        async loadTradingSymbolsWithRetry() {
+          for (let i = 0; i < 3; i++) {
+            try {
+              await this.loadTradingSymbols();
+              return;
+            } catch (e) {
+              if (i < 2) await new Promise((r) => setTimeout(r, 3000));
+            }
+          }
+          throw new Error('合约列表加载失败');
         },
         getFutures24hTicker() {
-          return fetch('https://fapi.binance.com/fapi/v1/ticker/24hr')
+          if (!_futureTradingSymbols) throw new Error('合约列表未加载');
+          const symbols = encodeURIComponent(JSON.stringify([..._futureTradingSymbols]));
+          return fetch(`https://fapi.binance.com/fapi/v1/ticker/24hr?symbols=${symbols}`)
             .then((r) => {
               if (!r.ok) throw new Error(`HTTP ${r.status}`);
               return r.json();
             })
             .then((data) => {
-              const usdt = data
-                .filter((t) => _futureTradingSymbols
-                  ? _futureTradingSymbols.has(t.symbol)
-                  : t.symbol.endsWith('USDT'))
-                .map((t) => ({
-                  symbol: t.symbol,
-                  change: parseFloat(t.priceChangePercent),
-                  price: parseFloat(t.lastPrice),
-                }));
+              const usdt = data.map((t) => ({
+                symbol: t.symbol,
+                change: parseFloat(t.priceChangePercent),
+                price: parseFloat(t.lastPrice),
+              }));
               usdt.sort((a, b) => b.change - a.change);
               return {
                 gainers: usdt.slice(0, 10),
@@ -867,12 +880,18 @@
           futuresLosers: [],
           futuresLoading: false,
           futuresError: '',
+          futuresSymbolsError: false,
           futuresUpdatedAt: null,
 
           async init() {
             useDirectApi = this.useDirectApi;
-            await Promise.all([this.loadData(), binanceApi.loadTradingSymbolsWithRetry()]);
-            await this.refreshFutures();
+            const [, symbolsResult] = await Promise.allSettled([this.loadData(), binanceApi.loadTradingSymbolsWithRetry()]);
+            if (symbolsResult.status === 'rejected') {
+              this.futuresSymbolsError = true;
+              this.futuresError = symbolsResult.reason?.message || '合约列表加载失败，请重试';
+            } else {
+              await this.refreshFutures();
+            }
             setInterval(() => this.refreshPrices(), 30 * 1000);
             setInterval(() => this.refreshFutures(), 5 * 60 * 1000);
           },
@@ -939,6 +958,7 @@
           },
 
           async refreshFutures() {
+            if (this.futuresSymbolsError) return;
             this.futuresLoading = true;
             this.futuresError = '';
             try {
@@ -951,6 +971,21 @@
             } finally {
               this.futuresLoading = false;
             }
+          },
+
+          async retryFutures() {
+            this.futuresSymbolsError = false;
+            this.futuresError = '';
+            this.futuresLoading = true;
+            try {
+              await binanceApi.loadTradingSymbolsWithRetry();
+            } catch (e) {
+              this.futuresSymbolsError = true;
+              this.futuresError = e?.message || '合约列表加载失败，请重试';
+              this.futuresLoading = false;
+              return;
+            }
+            await this.refreshFutures();
           },
 
           async saveGroups(groups = this.groups) {
