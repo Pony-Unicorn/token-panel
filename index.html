@@ -777,6 +777,12 @@
     </div>
 
     <script>
+      // fetch(
+      //   "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,aster-2,solana,ethereum,morpho,hyperliquid,uniswap,official-trump,curve-dao-token,zcash,binancecoin,okb,tron,ripple,polkadot,arbitrum,optimism,polygon-ecosystem-token,zksync,mantle,blockstack,starknet,stakestone,bianrensheng,vethor-token&price_change_percentage=24h",
+      // )
+      //   .then(console.log)
+      //   .catch(console.error);
+
       // --- API helpers (native fetch) ---
       const API_BASE_URL = "https://tpp.testbug.cc";
       const groupsUrl = `${API_BASE_URL}/api/groups`;
@@ -809,11 +815,6 @@
         search(query) {
           return fetch(
             `${getCgBase()}/search?query=${encodeURIComponent(query)}`,
-            {
-              headers: {
-                "x-cg-demo-api-key": "CG-8jEgkEnHjEA9drjd5jpV6WDg",
-              },
-            },
           )
             .then((r) => {
               if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -825,11 +826,6 @@
           if (!ids.length) return Promise.resolve([]);
           return fetch(
             `${getCgBase()}/coins/markets?vs_currency=usd&ids=${ids.join(",")}&price_change_percentage=24h`,
-            {
-              headers: {
-                "x-cg-demo-api-key": "CG-8jEgkEnHjEA9drjd5jpV6WDg",
-              },
-            },
           ).then((r) => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
