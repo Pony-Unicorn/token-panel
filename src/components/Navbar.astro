@@ -41,21 +41,6 @@
       </button>
     </div>
 
-    <!-- API mode toggle -->
-    <div
-      class="tooltip tooltip-bottom"
-      :data-tip="useDirectApi ? '直连 api.coingecko.com' : '后端代理'"
-    >
-      <button
-        class="btn btn-xs"
-        :class="useDirectApi ? 'btn-info btn-outline' : 'btn-ghost opacity-40'"
-        @click="toggleApiMode()"
-        aria-label="切换 API 模式"
-      >
-        <span x-text="useDirectApi ? 'Direct' : 'Proxy'"></span>
-      </button>
-    </div>
-
     <!-- Edit mode toggle -->
     <button
       class="btn btn-sm"

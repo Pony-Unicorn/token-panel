@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { api } from '../lib/api'
+import toasts from '../components/toaster'
 
 export interface IGroup {
   id: string
@@ -38,9 +39,7 @@ export interface IFuturesItem {
 
 const API_BASE_URL = 'https://tpp.testbug.cc'
 const groupsUrl = `${API_BASE_URL}/api/groups`
-
-const getCgBase = (direct: boolean) =>
-  direct ? 'https://api.coingecko.com/api/v3' : `${API_BASE_URL}/api/v3`
+const cgBaseUrl = `${API_BASE_URL}/api/v3`
 
 export const groupApi = {
   getAll(): Promise<IGroup[]> {
@@ -52,78 +51,29 @@ export const groupApi = {
 }
 
 export const coingeckoApi = {
-  async search(query: string, direct: boolean): Promise<ISearchCoin[]> {
+  async search(query: string): Promise<ISearchCoin[]> {
     const data = await api
-      .get(`${getCgBase(direct)}/search?query=${encodeURIComponent(query)}`)
+      .get(`${cgBaseUrl}/search?query=${encodeURIComponent(query)}`)
       .json<{ coins: ISearchCoin[] }>()
     return (data.coins || []).slice(0, 8)
   },
-  getMarkets(ids: string[], direct: boolean): Promise<ICoinMarket[]> {
+  getMarkets(ids: string[]): Promise<ICoinMarket[]> {
     if (!ids.length) return Promise.resolve([])
     return api
       .get(
-        `${getCgBase(direct)}/coins/markets?vs_currency=usd&ids=${ids.join(',')}&price_change_percentage=24h`
+        `${cgBaseUrl}/coins/markets?vs_currency=usd&ids=${ids.join(',')}&price_change_percentage=24h`
       )
       .json<ICoinMarket[]>()
   }
 }
 
-let _futureTradingSymbols: Set<string> | null = null
-
 export const binanceApi = {
-  async loadTradingSymbols(): Promise<void> {
-    const data = await api
-      .get('https://fapi.binance.com/fapi/v1/exchangeInfo')
-      .json<{ symbols: Array<{ status: string; symbol: string }> }>()
-    _futureTradingSymbols = new Set(
-      data.symbols
-        .filter((s) => s.status === 'TRADING' && s.symbol.endsWith('USDT'))
-        .map((s) => s.symbol)
-    )
-  },
-  async loadTradingSymbolsWithRetry(): Promise<void> {
-    for (let i = 0; i < 3; i++) {
-      try {
-        await this.loadTradingSymbols()
-        return
-      } catch {
-        if (i < 2) await new Promise((r) => setTimeout(r, 3000))
-      }
-    }
-    throw new Error('合约列表加载失败')
-  },
-  async getFutures24hTicker(): Promise<{ gainers: IFuturesItem[]; losers: IFuturesItem[] }> {
-    const data = await api
-      .get('https://fapi.binance.com/fapi/v1/ticker/24hr')
-      .json<Array<{ symbol: string; priceChangePercent: string; lastPrice: string }>>()
-    const usdt = data
-      .filter((t) =>
-        _futureTradingSymbols ? _futureTradingSymbols.has(t.symbol) : t.symbol.endsWith('USDT')
-      )
-      .map((t) => ({
-        symbol: t.symbol,
-        change: parseFloat(t.priceChangePercent),
-        price: parseFloat(t.lastPrice)
-      }))
-    usdt.sort((a, b) => b.change - a.change)
-    return {
-      gainers: usdt.slice(0, 10),
-      losers: usdt.slice(-10).reverse()
-    }
-  }
-}
-
-const showToast = (
-  msg: string,
-  type: 'success' | 'error' | 'warning' | 'info' = 'success'
-): void => {
-  const toasts = (
-    window as unknown as {
-      Alpine?: { store: (name: string) => Record<string, (m: string) => void> }
-    }
-  ).Alpine?.store('toasts')
-  if (toasts && typeof toasts[type] === 'function') {
-    toasts[type](msg)
+  async getFuturesSummary(): Promise<{
+    gainers: IFuturesItem[]
+    losers: IFuturesItem[]
+    updatedAt?: number
+  }> {
+    return api.get(`${API_BASE_URL}/api/futures/summary`).json()
   }
 }
 
@@ -134,8 +84,6 @@ export function tokenPanel() {
     priceFlash: {} as Record<string, 'up' | 'down'>,
     lastUpdated: null as Date | null,
     isEditMode: false,
-    useDirectApi:
-      typeof window !== 'undefined' ? localStorage.getItem('cgDirectApi') === 'true' : false,
     isLoading: false,
     loadError: '',
     priceError: '',
@@ -160,19 +108,11 @@ export function tokenPanel() {
     _futuresInterval: null as ReturnType<typeof setInterval> | null,
 
     async init() {
-      if (typeof window !== 'undefined') {
-        this.useDirectApi = localStorage.getItem('cgDirectApi') === 'true'
-      }
-      await Promise.all([
-        this.loadData(),
-        binanceApi.loadTradingSymbolsWithRetry().catch((e: Error) => {
-          this.futuresError = e?.message || '合约列表加载失败'
-        })
-      ])
-      await this.refreshFutures()
+      await Promise.all([this.loadData(), this.refreshFutures()])
 
       this._priceInterval = setInterval(() => this.refreshPrices(), 30 * 1000)
       this._futuresInterval = setInterval(() => this.refreshFutures(), 5 * 60 * 1000)
+      ;(this as any).$cleanup?.(() => this.destroy())
     },
 
     destroy() {
@@ -194,7 +134,7 @@ export function tokenPanel() {
       try {
         const ids = [...new Set(this.groups.flatMap((g) => g.coins))]
         if (ids.length) {
-          const data = await coingeckoApi.getMarkets(ids, this.useDirectApi)
+          const data = await coingeckoApi.getMarkets(ids)
           this.prices = Object.fromEntries(data.map((c) => [c.id, c]))
           this.lastUpdated = data[0]?.last_updated ? new Date(data[0].last_updated) : new Date()
         }
@@ -211,7 +151,7 @@ export function tokenPanel() {
       if (!ids.length) return
       try {
         const oldPrices = this.prices
-        const data = await coingeckoApi.getMarkets(ids, this.useDirectApi)
+        const data = await coingeckoApi.getMarkets(ids)
         const newPrices = Object.fromEntries(data.map((c) => [c.id, c]))
 
         const flashes: Record<string, 'up' | 'down'> = {}
@@ -242,10 +182,10 @@ export function tokenPanel() {
       this.futuresLoading = true
       this.futuresError = ''
       try {
-        const { gainers, losers } = await binanceApi.getFutures24hTicker()
+        const { gainers, losers, updatedAt } = await binanceApi.getFuturesSummary()
         this.futuresGainers = gainers
         this.futuresLosers = losers
-        this.futuresUpdatedAt = new Date()
+        this.futuresUpdatedAt = updatedAt ? new Date(updatedAt) : new Date()
       } catch (e: any) {
         this.futuresError = e?.message || '合约数据加载失败'
       } finally {
@@ -261,7 +201,7 @@ export function tokenPanel() {
         await groupApi.update(targetGroups)
         success = true
       } catch {
-        showToast('保存失败，请重试', 'error')
+        toasts.error('保存失败，请重试')
       } finally {
         this.isSaving = false
       }
@@ -273,25 +213,26 @@ export function tokenPanel() {
       this.isEditMode = !this.isEditMode
     },
 
-    toggleApiMode() {
-      this.useDirectApi = !this.useDirectApi
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('cgDirectApi', String(this.useDirectApi))
-      }
-      this.refreshPrices()
+    // --- Modal helpers ---
+    openModal(name: 'groupModal' | 'coinModal' | 'confirmModal') {
+      const modal = (this as any).$refs?.[name] as HTMLDialogElement | undefined
+      modal?.showModal()
+    },
+
+    closeModal(name: 'groupModal' | 'coinModal' | 'confirmModal') {
+      const modal = (this as any).$refs?.[name] as HTMLDialogElement | undefined
+      modal?.close()
     },
 
     // --- Group actions ---
     openNewGroup() {
       this.groupModal = { isEdit: false, id: null, name: '' }
-      const modal = (this as any).$refs?.groupModal as HTMLDialogElement | undefined
-      modal?.showModal()
+      this.openModal('groupModal')
     },
 
     openEditGroup(group: IGroup) {
       this.groupModal = { isEdit: true, id: group.id, name: group.name }
-      const modal = (this as any).$refs?.groupModal as HTMLDialogElement | undefined
-      modal?.showModal()
+      this.openModal('groupModal')
     },
 
     async confirmGroup() {
@@ -305,25 +246,22 @@ export function tokenPanel() {
       }
       if (await this.saveGroups(newGroups)) {
         this.groups = newGroups
-        const modal = (this as any).$refs?.groupModal as HTMLDialogElement | undefined
-        modal?.close()
+        this.closeModal('groupModal')
       }
     },
 
     openDeleteGroup(id: string) {
       this.confirmDeleteModal = { groupId: id }
-      const modal = (this as any).$refs?.confirmModal as HTMLDialogElement | undefined
-      modal?.showModal()
+      this.openModal('confirmModal')
     },
 
     async confirmDelete() {
       if (!this.confirmDeleteModal.groupId) return
       const targetId = this.confirmDeleteModal.groupId
       const newGroups = this.groups.filter((g) => g.id !== targetId)
-      const modal = (this as any).$refs?.confirmModal as HTMLDialogElement | undefined
-      modal?.close()
       if (await this.saveGroups(newGroups)) {
         this.groups = newGroups
+        this.closeModal('confirmModal')
       }
     },
 
@@ -336,18 +274,17 @@ export function tokenPanel() {
         isSearching: false,
         searchError: ''
       }
-      const modal = (this as any).$refs?.coinModal as HTMLDialogElement | undefined
-      modal?.showModal()
+      this.openModal('coinModal')
     },
 
     async searchCoins() {
       const q = this.coinModal.query.trim()
-      if (!q) return
+      if (!q || this.coinModal.isSearching) return
       this.coinModal.isSearching = true
       this.coinModal.searchError = ''
       this.coinModal.results = []
       try {
-        this.coinModal.results = await coingeckoApi.search(q, this.useDirectApi)
+        this.coinModal.results = await coingeckoApi.search(q)
       } catch (e: any) {
         this.coinModal.searchError = e?.message || '搜索失败'
       } finally {
@@ -359,20 +296,19 @@ export function tokenPanel() {
       const g = this.groups.find((group) => group.id === this.coinModal.groupId)
       if (!g) return
       if (g.coins.includes(coinId)) {
-        showToast('该代币已在看板中', 'warning')
+        toasts.warning('该代币已在看板中')
         return
       }
       g.coins.push(coinId)
-      const modal = (this as any).$refs?.coinModal as HTMLDialogElement | undefined
-      modal?.close()
+      this.closeModal('coinModal')
       await this.saveGroups()
       await this.refreshPrices()
     },
 
-    async removeCoin(groupId: string, symbol: string) {
+    async removeCoin(groupId: string, coinId: string) {
       const g = this.groups.find((group) => group.id === groupId)
       if (!g) return
-      g.coins = g.coins.filter((c) => c !== symbol)
+      g.coins = g.coins.filter((c) => c !== coinId)
       await this.saveGroups()
     },
 
@@ -389,7 +325,13 @@ export function tokenPanel() {
     formatPrice(price: number | undefined | null): string {
       if (price == null) return '—'
       if (price >= 1) {
-        return '$' + price.toLocaleString('en-US', { maximumFractionDigits: 2 })
+        return (
+          '$' +
+          price.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        )
       }
       return '$' + price.toPrecision(4)
     },
@@ -413,14 +355,6 @@ export function tokenPanel() {
     athDdClass(p: ICoinMarket | undefined): string {
       if (!p?.current_price || !p?.ath) return 'text-base-content/40'
       return p.current_price >= p.ath ? 'text-success' : 'text-error/70'
-    },
-
-    formatMarketCap(cap: number | undefined | null): string {
-      if (!cap) return '—'
-      if (cap >= 1e12) return (cap / 1e12).toFixed(2) + 'T'
-      if (cap >= 1e9) return (cap / 1e9).toFixed(2) + 'B'
-      if (cap >= 1e6) return (cap / 1e6).toFixed(2) + 'M'
-      return cap.toLocaleString('en-US')
     },
 
     formatTime(date: Date | string | null): string {

@@ -1,0 +1,24 @@
+---
+// src/components/ConfirmModal.astro
+---
+
+<dialog x-ref="confirmModal" class="modal" aria-labelledby="confirm-modal-title">
+  <div class="modal-box">
+    <h3 id="confirm-modal-title" class="text-lg font-bold mb-2">
+      删除看板
+    </h3>
+    <p class="text-base-content/70 mb-4">确认删除该看板？此操作不可撤销。</p>
+    <div class="modal-action">
+      <button type="button" class="btn btn-ghost" @click="$refs.confirmModal.close()">
+        取消
+      </button>
+      <button type="button" class="btn btn-error" :disabled="isSaving" @click="confirmDelete()">
+        <span x-show="isSaving" class="loading loading-spinner loading-sm" x-cloak></span>
+        删除
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>

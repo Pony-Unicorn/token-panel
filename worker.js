@@ -55,18 +55,107 @@ export default {
     }
 
     // Proxy /api/v3/* to CoinGecko (GET only, with cf cache)
-    if (pathname.startsWith('/api/v3/') && request.method === 'GET') {
+    if (pathname.startsWith('/api/v3/') && method === 'GET') {
       const url = new URL(request.url)
       const targetUrl = 'https://api.coingecko.com' + url.pathname + url.search
       const origin = await fetch(targetUrl, {
-        headers: request.headers,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; CloudflareWorker/1.0)'
+        },
         cf: {
           cacheEverything: true,
           cacheKey: targetUrl,
           cacheTtlByStatus: { '200-299': 60, '400-499': 0, '500-599': 0 }
         }
       })
-      return origin
+      const headers = new Headers(origin.headers)
+      Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v))
+      return new Response(origin.body, {
+        status: origin.status,
+        headers
+      })
+    }
+
+    // GET /api/futures/summary — Binance Futures Gainers & Losers (30s cf cache)
+    if (pathname === '/api/futures/summary' && method === 'GET') {
+      try {
+        let tradingSymbols = null
+        try {
+          const infoRes = await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo', {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (compatible; CloudflareWorker/1.0)'
+            },
+            cf: {
+              cacheEverything: true,
+              cacheKey: 'https://fapi.binance.com/fapi/v1/exchangeInfo',
+              cacheTtlByStatus: { '200-299': 3600, '400-499': 0, '500-599': 0 }
+            }
+          })
+          if (infoRes.ok) {
+            const info = await infoRes.json()
+            tradingSymbols = new Set(
+              (info.symbols || [])
+                .filter((s) => s.status === 'TRADING' && s.symbol && s.symbol.endsWith('USDT'))
+                .map((s) => s.symbol)
+            )
+          }
+        } catch {
+          // Fallback if exchangeInfo fails
+        }
+
+        const binanceRes = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr', {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (compatible; CloudflareWorker/1.0)'
+          },
+          cf: {
+            cacheEverything: true,
+            cacheKey: 'https://fapi.binance.com/fapi/v1/ticker/24hr',
+            cacheTtlByStatus: { '200-299': 30, '400-499': 0, '500-599': 0 }
+          }
+        })
+
+        if (!binanceRes.ok) {
+          return new Response(`Binance API error: ${binanceRes.status}`, {
+            status: binanceRes.status,
+            headers: CORS_HEADERS
+          })
+        }
+
+        const data = await binanceRes.json()
+        const usdt = data
+          .filter((t) =>
+            tradingSymbols ? tradingSymbols.has(t.symbol) : t.symbol && t.symbol.endsWith('USDT')
+          )
+          .map((t) => ({
+            symbol: t.symbol,
+            change: parseFloat(t.priceChangePercent),
+            price: parseFloat(t.lastPrice)
+          }))
+          .filter((t) => !isNaN(t.change) && !isNaN(t.price) && t.price > 0)
+
+        usdt.sort((a, b) => b.change - a.change)
+
+        const summary = {
+          gainers: usdt.slice(0, 10),
+          losers: usdt.slice(-10).reverse(),
+          updatedAt: Date.now()
+        }
+
+        return Response.json(summary, {
+          headers: {
+            ...CORS_HEADERS,
+            'Cache-Control': 'public, max-age=30'
+          }
+        })
+      } catch (err) {
+        return new Response(`Failed to fetch Binance futures: ${err.message}`, {
+          status: 500,
+          headers: CORS_HEADERS
+        })
+      }
     }
 
     return new Response('Not Found.', { status: 404 })

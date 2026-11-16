@@ -1,0 +1,40 @@
+---
+// src/components/GroupModal.astro
+---
+
+<dialog x-ref="groupModal" class="modal" aria-labelledby="group-modal-title">
+  <div class="modal-box">
+    <h3
+      id="group-modal-title"
+      class="text-lg font-bold mb-4"
+      x-text="groupModal.isEdit ? '修改看板名称' : '新建看板'"
+    ></h3>
+    <form @submit.prevent="confirmGroup()">
+      <input
+        type="text"
+        class="input w-full"
+        placeholder="看板名称"
+        x-model="groupModal.name"
+        autofocus
+        required
+      />
+      <div class="modal-action">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          :disabled="isSaving"
+          @click="$refs.groupModal.close()"
+        >
+          取消
+        </button>
+        <button type="submit" class="btn btn-primary" :disabled="isSaving">
+          <span x-show="isSaving" class="loading loading-spinner loading-sm" x-cloak></span>
+          确认
+        </button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>

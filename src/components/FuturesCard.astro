@@ -1,0 +1,73 @@
+---
+// src/components/FuturesCard.astro
+export interface Props {
+  title: string
+  type: 'gainers' | 'losers'
+}
+
+const { title, type } = Astro.props
+const isGainers = type === 'gainers'
+const listKey = isGainers ? 'futuresGainers' : 'futuresLosers'
+const deltaColorClass = isGainers ? 'text-success' : 'text-error'
+const deltaPrefix = isGainers ? '+' : ''
+---
+
+<article class="card card-border bg-base-100 shadow-xs w-full sm:w-80 shrink-0">
+  <div class="card-body p-4 gap-3">
+    <div class="flex items-center justify-between">
+      <h2 class="font-bold text-base">{title}</h2>
+      <span x-show="futuresLoading" class="loading loading-spinner loading-xs" x-cloak></span>
+    </div>
+
+    <!-- Error message -->
+    <template x-if="futuresError && !futuresLoading">
+      <p class="text-xs text-error/70" x-text="futuresError"></p>
+    </template>
+
+    <!-- Skeletons loading state -->
+    <template x-if={`futuresLoading && ${listKey}.length === 0`}>
+      <div class="flex flex-col gap-2">
+        <template x-for="i in 5" :key="i">
+          <div class="skeleton h-5 w-full rounded"></div>
+        </template>
+      </div>
+    </template>
+
+    <!-- List -->
+    <template x-if={`${listKey}.length > 0`}>
+      <div class="flex flex-col gap-0" role="list">
+        <template x-for={`(item, idx) in ${listKey}`} :key="item.symbol">
+          <a
+            :href="'https://www.binance.com/en/futures/' + item.symbol"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="grid grid-cols-[1.2rem_1fr_3.5rem_4rem] gap-x-2 items-center px-1.5 py-1.5 rounded-lg hover:bg-base-200/80 active:scale-[0.99] transition-all"
+            role="listitem"
+          >
+            <span
+              class="text-[10px] text-base-content/35 text-right tabular-nums font-mono"
+              x-text="idx + 1"
+            ></span>
+            <span class="text-xs font-semibold truncate" x-text="item.symbol"></span>
+            <span
+              class={`text-xs ${deltaColorClass} font-mono tabular-nums text-right`}
+              x-text={`'${deltaPrefix}' + item.change.toFixed(2) + '%'`}
+            ></span>
+            <span
+              class="text-xs font-mono tabular-nums text-right text-base-content/60"
+              x-text="item.price >= 1 ? '$' + item.price.toLocaleString('en-US', {maximumFractionDigits: 2}) : '$' + item.price.toPrecision(4)"
+            ></span>
+          </a>
+        </template>
+      </div>
+    </template>
+
+    <!-- Updated timestamp -->
+    <template x-if="futuresUpdatedAt">
+      <div class="text-[10px] text-base-content/30 text-right">
+        更新于
+        <span x-text="formatTime(futuresUpdatedAt)"></span>
+      </div>
+    </template>
+  </div>
+</article>
