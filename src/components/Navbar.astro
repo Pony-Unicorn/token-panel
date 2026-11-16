@@ -1,11 +1,13 @@
 ---
+import pkg from '../../package.json'
 // Navbar component for Token Panel
 ---
 
 <header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 sticky top-0 z-30">
-  <div class="flex-1 flex items-center gap-3">
+  <div class="flex-1 flex items-center gap-2 sm:gap-3">
     <a href="/" class="flex items-center gap-2">
       <img src="/logo.png" alt="Token Panel" class="h-8 w-auto object-contain" />
+      <span class="badge badge-neutral badge-xs font-mono text-[10px] opacity-60">v{pkg.version}</span>
     </a>
     <span
       x-show="lastUpdatedText"
