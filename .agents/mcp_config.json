@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "grep": {
+      "serverUrl": "https://mcp.grep.app"
+    },
+    "Astro docs": {
+      "serverUrl": "https://mcp.docs.astro.build/mcp"
+    }
+  }
+}

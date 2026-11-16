@@ -1,0 +1,506 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout
+  title="TPP-Token Price Panel"
+  description="Live BTC, ETH, SOL prices with 24H change and market overview."
+>
+  <div class="flex flex-wrap gap-3 p-3 sm:gap-4 sm:p-6 items-start content-start min-h-[calc(100vh-64px)] max-w-screen-2xl mx-auto">
+    <!-- Loading -->
+    <template x-if="isLoading && groups.length === 0">
+      <div class="flex items-center justify-center w-full h-64">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    </template>
+
+    <!-- Load error -->
+    <template x-if="!isLoading && loadError">
+      <div class="flex flex-col items-center justify-center w-full h-64 gap-2 text-base-content/60">
+        <span class="text-sm" x-text="loadError"></span>
+        <button class="btn btn-sm btn-outline" @click="loadData()">
+          重试
+        </button>
+      </div>
+    </template>
+
+    <!-- Empty state -->
+    <template x-if="!isLoading && !loadError && groups.length === 0">
+      <div class="flex flex-col items-center justify-center w-full h-64 gap-3 text-base-content/40">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="size-12"
+          aria-hidden="true"
+        >
+          <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+          <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+          <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+          <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+        </svg>
+        <p>还没有看板，点击右上角新建看板开始</p>
+      </div>
+    </template>
+
+    <!-- Board columns -->
+    <template x-for="group in groups" :key="group.id">
+      <div class="card bg-base-100 shadow-sm w-full sm:w-80 shrink-0">
+        <div class="card-body p-4 gap-3">
+          <!-- Board header -->
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-base truncate" x-text="group.name"></h2>
+            <div class="flex gap-1 shrink-0" x-show="isEditMode" x-cloak>
+              <button
+                class="btn btn-ghost btn-xs"
+                @click="openEditGroup(group)"
+                title="重命名"
+                aria-label="重命名看板"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="size-3.5"
+                  aria-hidden="true"
+                >
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                  <path d="m15 5 4 4"></path>
+                </svg>
+              </button>
+              <button
+                class="btn btn-ghost btn-xs text-error"
+                @click="openDeleteGroup(group.id)"
+                title="删除看板"
+                aria-label="删除看板"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="size-3.5"
+                  aria-hidden="true"
+                >
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Token cards -->
+          <div class="flex flex-col">
+            <!-- Column header -->
+            <template x-if="group.coins.length > 0">
+              <div class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-end px-1 pb-1.5 mb-0.5 border-b border-base-300">
+                <span class="text-[10px] text-base-content/40 text-right">#</span>
+                <span></span>
+                <div>
+                  <div class="text-[10px] text-base-content/50 leading-none">名字</div>
+                  <div class="text-[9px] text-base-content/30 leading-snug">ATH / DD%</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-[10px] text-base-content/50 leading-none">价格</div>
+                  <div class="text-[9px] text-base-content/30 leading-snug">24hr</div>
+                </div>
+                <span></span>
+              </div>
+            </template>
+
+            <template x-for="coin in sortedCoins(group.coins)" :key="coin">
+              <div
+                class="grid grid-cols-[1.5rem_2rem_1fr_5rem_1rem] gap-x-2 items-center px-1 py-2.5 rounded-lg hover:bg-base-200 transition-colors cursor-pointer"
+                @click="!isEditMode && window.open('https://www.coingecko.com/en/coins/' + coin + '?utm_source=token-panel&utm_medium=referral', '_blank')"
+              >
+                <!-- Rank -->
+                <span
+                  class="text-[11px] text-base-content/35 text-right tabular-nums"
+                  x-text="prices[coin]?.market_cap_rank ?? '—'"
+                ></span>
+
+                <!-- Logo -->
+                <div
+                  class="size-8 rounded-full shrink-0 flex items-center justify-center overflow-hidden bg-base-300"
+                >
+                  <template x-if="prices[coin]?.image">
+                    <img
+                      :src="prices[coin].image"
+                      :alt="coin"
+                      class="size-full object-contain p-0.5"
+                    />
+                  </template>
+                  <template x-if="!prices[coin]?.image">
+                    <span
+                      class="text-[9px] font-bold text-base-content/50"
+                      x-text="(prices[coin]?.symbol?.toUpperCase() ?? coin).slice(0, 2)"
+                    ></span>
+                  </template>
+                </div>
+
+                <!-- Name + ATH + 24h High/Low -->
+                <div class="min-w-0">
+                  <div
+                    class="text-sm font-semibold leading-snug truncate"
+                    x-text="prices[coin]?.name ?? coin"
+                  ></div>
+                  <div class="flex gap-1.5 items-center mt-0.5">
+                    <span
+                      class="text-xs font-mono text-base-content/45 leading-none tabular-nums"
+                      x-text="prices[coin]?.ath ? formatPrice(prices[coin].ath) : '—'"
+                    ></span>
+                    <span
+                      class="text-xs leading-none tabular-nums"
+                      :class="athDdClass(prices[coin])"
+                      x-text="prices[coin] ? formatAthDd(prices[coin]) : '—'"
+                    ></span>
+                  </div>
+                  <div class="flex gap-1.5 items-center mt-0.5">
+                    <span class="text-[10px] text-success/60 leading-none font-medium">H</span>
+                    <span
+                      class="text-[10px] font-mono text-base-content/60 leading-none tabular-nums"
+                      x-text="prices[coin]?.high_24h ? formatPrice(prices[coin].high_24h) : '—'"
+                    ></span>
+                    <span class="text-[10px] text-error/60 leading-none font-medium">L</span>
+                    <span
+                      class="text-[10px] font-mono text-base-content/60 leading-none tabular-nums"
+                      x-text="prices[coin]?.low_24h ? formatPrice(prices[coin].low_24h) : '—'"
+                    ></span>
+                  </div>
+                </div>
+
+                <!-- Price + 24hr -->
+                <div class="text-right min-w-0">
+                  <div
+                    class="text-sm font-mono font-semibold leading-snug tabular-nums"
+                    :class="priceFlash[coin] === 'up' ? 'price-flash-up' : priceFlash[coin] === 'down' ? 'price-flash-down' : ''"
+                    x-text="prices[coin] ? formatPrice(prices[coin].current_price) : '—'"
+                  ></div>
+                  <div
+                    class="text-xs leading-none tabular-nums mt-0.5"
+                    :class="prices[coin]?.price_change_percentage_24h != null ? deltaClass(prices[coin].price_change_percentage_24h) : 'text-base-content/30'"
+                    x-text="prices[coin]?.price_change_percentage_24h != null ? formatDelta(prices[coin].price_change_percentage_24h) : '—'"
+                  ></div>
+                </div>
+
+                <!-- Remove -->
+                <button
+                  x-show="isEditMode"
+                  class="btn btn-ghost btn-xs size-4 p-0 min-h-0"
+                  @click.stop="removeCoin(group.id, coin)"
+                  title="移除"
+                  aria-label="移除代币"
+                  x-cloak
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="size-3"
+                    aria-hidden="true"
+                  >
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Add coin -->
+          <button
+            x-show="isEditMode"
+            class="btn btn-ghost btn-sm w-full text-base-content/50"
+            @click="openAddCoin(group.id)"
+            x-cloak
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="size-4"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            添加代币
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Futures Gainers Card -->
+    <div class="card bg-base-100 shadow-sm w-full sm:w-80 shrink-0">
+      <div class="card-body p-4 gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-base">合约涨幅榜</h2>
+          <span x-show="futuresLoading" class="loading loading-spinner loading-xs" x-cloak></span>
+        </div>
+        <template x-if="futuresError && !futuresLoading">
+          <p class="text-xs text-error/70" x-text="futuresError"></p>
+        </template>
+        <template x-if="futuresLoading && futuresGainers.length === 0">
+          <div class="flex flex-col gap-2">
+            <template x-for="i in 5" :key="i">
+              <div class="skeleton h-5 w-full rounded"></div>
+            </template>
+          </div>
+        </template>
+        <template x-if="futuresGainers.length > 0">
+          <div class="flex flex-col gap-0">
+            <template x-for="(item, idx) in futuresGainers" :key="item.symbol">
+              <a
+                :href="'https://www.binance.com/en/futures/' + item.symbol"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="grid grid-cols-[1.2rem_1fr_3.5rem_4rem] gap-x-2 items-center px-1 py-1.5 rounded-lg hover:bg-base-200 transition-colors"
+              >
+                <span
+                  class="text-[10px] text-base-content/35 text-right tabular-nums"
+                  x-text="idx + 1"
+                ></span>
+                <span class="text-xs font-semibold truncate" x-text="item.symbol"></span>
+                <span
+                  class="text-xs text-success font-mono tabular-nums text-right"
+                  x-text="'+' + item.change.toFixed(2) + '%'"
+                ></span>
+                <span
+                  class="text-xs font-mono tabular-nums text-right text-base-content/60"
+                  x-text="item.price >= 1 ? '$' + item.price.toLocaleString('en-US', {maximumFractionDigits: 2}) : '$' + item.price.toPrecision(4)"
+                ></span>
+              </a>
+            </template>
+          </div>
+        </template>
+        <template x-if="futuresUpdatedAt">
+          <div class="text-[10px] text-base-content/30 text-right">
+            更新于
+            <span x-text="formatTime(futuresUpdatedAt)"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Futures Losers Card -->
+    <div class="card bg-base-100 shadow-sm w-full sm:w-80 shrink-0">
+      <div class="card-body p-4 gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-base">合约跌幅榜</h2>
+          <span x-show="futuresLoading" class="loading loading-spinner loading-xs" x-cloak></span>
+        </div>
+        <template x-if="futuresError && !futuresLoading">
+          <p class="text-xs text-error/70" x-text="futuresError"></p>
+        </template>
+        <template x-if="futuresLoading && futuresLosers.length === 0">
+          <div class="flex flex-col gap-2">
+            <template x-for="i in 5" :key="i">
+              <div class="skeleton h-5 w-full rounded"></div>
+            </template>
+          </div>
+        </template>
+        <template x-if="futuresLosers.length > 0">
+          <div class="flex flex-col gap-0">
+            <template x-for="(item, idx) in futuresLosers" :key="item.symbol">
+              <a
+                :href="'https://www.binance.com/en/futures/' + item.symbol"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="grid grid-cols-[1.2rem_1fr_3.5rem_4rem] gap-x-2 items-center px-1 py-1.5 rounded-lg hover:bg-base-200 transition-colors"
+              >
+                <span
+                  class="text-[10px] text-base-content/35 text-right tabular-nums"
+                  x-text="idx + 1"
+                ></span>
+                <span class="text-xs font-semibold truncate" x-text="item.symbol"></span>
+                <span
+                  class="text-xs text-error font-mono tabular-nums text-right"
+                  x-text="item.change.toFixed(2) + '%'"
+                ></span>
+                <span
+                  class="text-xs font-mono tabular-nums text-right text-base-content/60"
+                  x-text="item.price >= 1 ? '$' + item.price.toLocaleString('en-US', {maximumFractionDigits: 2}) : '$' + item.price.toPrecision(4)"
+                ></span>
+              </a>
+            </template>
+          </div>
+        </template>
+        <template x-if="futuresUpdatedAt">
+          <div class="text-[10px] text-base-content/30 text-right">
+            更新于
+            <span x-text="formatTime(futuresUpdatedAt)"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- New group card (edit mode only) -->
+    <template x-if="isEditMode">
+      <button
+        class="card bg-base-100 shadow-sm w-full sm:w-80 shrink-0 h-24 flex items-center justify-center gap-2 border-2 border-dashed border-base-300 hover:border-primary hover:text-primary text-base-content/40 transition-colors cursor-pointer"
+        @click="openNewGroup()"
+        aria-label="新建看板"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="size-5"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span class="text-sm">新建看板</span>
+      </button>
+    </template>
+  </div>
+
+  <!-- Group modal (new / edit) -->
+  <dialog x-ref="groupModal" class="modal" aria-labelledby="group-modal-title">
+    <div class="modal-box">
+      <h3
+        id="group-modal-title"
+        class="text-lg font-bold mb-4"
+        x-text="groupModal.isEdit ? '修改看板名称' : '新建看板'"
+      ></h3>
+      <input
+        type="text"
+        class="input w-full"
+        placeholder="看板名称"
+        x-model="groupModal.name"
+        @keydown.enter="confirmGroup()"
+        autofocus
+      />
+      <div class="modal-action">
+        <button class="btn btn-ghost" :disabled="isSaving" @click="$refs.groupModal.close()">
+          取消
+        </button>
+        <button class="btn btn-primary" :disabled="isSaving" @click="confirmGroup()">
+          <span x-show="isSaving" class="loading loading-spinner loading-sm" x-cloak></span>
+          确认
+        </button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <!-- Add coin modal -->
+  <dialog x-ref="coinModal" class="modal" aria-labelledby="coin-modal-title">
+    <div class="modal-box">
+      <h3 id="coin-modal-title" class="text-lg font-bold mb-4">
+        添加代币
+      </h3>
+      <div class="flex gap-2">
+        <input
+          type="text"
+          class="input flex-1"
+          placeholder="搜索代币名称或符号"
+          x-model="coinModal.query"
+          @keydown.enter="searchCoins()"
+          autofocus
+        />
+        <button class="btn btn-primary" :disabled="coinModal.isSearching" @click="searchCoins()">
+          <span
+            x-show="coinModal.isSearching"
+            class="loading loading-spinner loading-sm"
+            x-cloak
+          ></span>
+          <span x-show="!coinModal.isSearching">搜索</span>
+        </button>
+      </div>
+
+      <!-- Search error -->
+      <template x-if="coinModal.searchError">
+        <p class="text-sm text-error/70 mt-2" x-text="coinModal.searchError"></p>
+      </template>
+
+      <!-- Results -->
+      <div class="mt-3 flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+        <template x-for="result in coinModal.results" :key="result.id">
+          <button
+            class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-base-200 transition-colors text-left w-full cursor-pointer"
+            :disabled="isSaving"
+            @click="selectCoin(result.id)"
+          >
+            <img
+              :src="result.thumb"
+              :alt="result.name"
+              class="size-7 rounded-full shrink-0"
+            />
+            <span class="text-sm font-semibold truncate" x-text="result.name"></span>
+            <span class="text-xs text-base-content/40 shrink-0" x-text="result.symbol"></span>
+            <span
+              class="text-xs text-base-content/30 ml-auto shrink-0"
+              x-text="result.market_cap_rank ? '#' + result.market_cap_rank : ''"
+            ></span>
+            <span
+              x-show="isSaving"
+              class="loading loading-spinner loading-xs shrink-0"
+              x-cloak
+            ></span>
+          </button>
+        </template>
+      </div>
+
+      <div class="modal-action">
+        <button class="btn btn-ghost" @click="$refs.coinModal.close()">
+          取消
+        </button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <!-- Delete confirm modal -->
+  <dialog x-ref="confirmModal" class="modal" aria-labelledby="confirm-modal-title">
+    <div class="modal-box">
+      <h3 id="confirm-modal-title" class="text-lg font-bold mb-2">
+        删除看板
+      </h3>
+      <p class="text-base-content/70 mb-4">确认删除该看板？此操作不可撤销。</p>
+      <div class="modal-action">
+        <button class="btn btn-ghost" @click="$refs.confirmModal.close()">
+          取消
+        </button>
+        <button class="btn btn-error" :disabled="isSaving" @click="confirmDelete()">
+          <span x-show="isSaving" class="loading loading-spinner loading-sm" x-cloak></span>
+          删除
+        </button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+</Layout>

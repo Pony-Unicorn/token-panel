@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Swift Local Icon Example (Use via <Icon name="logo" />) -->
+  <path
+    fill-rule="evenodd"
+    clip-rule="evenodd"
+    d="M13.85 2.15a.75.75 0 0 1 .35.85L12.4 8.5H19a.75.75 0 0 1 .58 1.22l-10 12a.75.75 0 0 1-1.29-.67L9.8 14H3.5a.75.75 0 0 1-.58-1.22l10-10a.75.75 0 0 1 .93-.63z"
+  />
+</svg>

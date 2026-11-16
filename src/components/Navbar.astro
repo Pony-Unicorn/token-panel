@@ -1,0 +1,100 @@
+---
+// Navbar component for Token Panel
+---
+
+<header class="navbar bg-base-100 shadow-sm px-4 sm:px-6 sticky top-0 z-30">
+  <div class="flex-1 flex items-center gap-3">
+    <a href="/" class="flex items-center gap-2">
+      <img src="/logo.png" alt="Token Panel" class="h-8 w-auto object-contain" />
+    </a>
+    <span
+      x-show="lastUpdatedText"
+      x-text="lastUpdatedText"
+      class="text-xs text-base-content/40"
+      x-cloak
+    ></span>
+  </div>
+
+  <div class="flex-none gap-2 flex items-center">
+    <!-- Price error indicator -->
+    <div x-show="priceError" class="tooltip tooltip-bottom" :data-tip="priceError" x-cloak>
+      <button
+        class="btn btn-sm btn-ghost text-warning"
+        @click="refreshPrices()"
+        aria-label="价格加载失败，点击重试"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-4 h-4"
+          aria-hidden="true"
+        >
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- API mode toggle -->
+    <div
+      class="tooltip tooltip-bottom"
+      :data-tip="useDirectApi ? '直连 api.coingecko.com' : '后端代理'"
+    >
+      <button
+        class="btn btn-xs"
+        :class="useDirectApi ? 'btn-info btn-outline' : 'btn-ghost opacity-40'"
+        @click="toggleApiMode()"
+        aria-label="切换 API 模式"
+      >
+        <span x-text="useDirectApi ? 'Direct' : 'Proxy'"></span>
+      </button>
+    </div>
+
+    <!-- Edit mode toggle -->
+    <button
+      class="btn btn-sm"
+      :class="isEditMode ? 'btn-success' : 'btn-ghost'"
+      @click="toggleEditMode()"
+    >
+      <!-- 编辑图标 -->
+      <svg
+        x-show="!isEditMode"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-4 h-4"
+        aria-hidden="true"
+      >
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+        <path d="m15 5 4 4"></path>
+      </svg>
+      <!-- 完成图标 -->
+      <svg
+        x-show="isEditMode"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-4 h-4"
+        aria-hidden="true"
+        x-cloak
+      >
+        <path d="M20 6 9 17l-5-5"></path>
+      </svg>
+      <span x-text="isEditMode ? '完成' : '编辑'"></span>
+    </button>
+  </div>
+</header>

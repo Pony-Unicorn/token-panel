@@ -1,0 +1,8 @@
+# Ignore artifacts:
+dist
+.astro
+
+# lockfiles
+pnpm-lock.yaml
+
+public

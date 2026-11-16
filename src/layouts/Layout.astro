@@ -1,0 +1,40 @@
+---
+import '../app.css'
+import { SEO } from 'astro-seo'
+import Toaster from '../components/Toaster.astro'
+import Navbar from '../components/Navbar.astro'
+import Footer from '../components/Footer.astro'
+
+export interface Props {
+  title?: string
+  description?: string
+}
+
+const {
+  title = 'TPP-Token Price Panel',
+  description = 'Live BTC, ETH, SOL prices with 24H change and market overview.'
+} = Astro.props
+---
+
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#1d232a" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <SEO title={title} description={description} />
+  </head>
+  <body class="min-h-screen flex flex-col bg-base-200 text-base-content" x-data="tokenPanel">
+    <Navbar />
+
+    <main class="flex-1 w-full">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <Toaster />
+  </body>
+</html>

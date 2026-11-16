@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+@plugin 'daisyui' {
+  themes: dark --default;
+}
+
+/* Alpine.js 防闪烁指令 */
+[x-cloak] {
+  display: none !important;
+}
+
+/* Modal scroll containment */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+/* 优化图片渲染首屏性能 */
+img {
+  content-visibility: auto;
+}
+
+/* 代币价格变动闪烁动画 */
+@keyframes flash-up {
+  0%,
+  50% {
+    color: var(--color-success);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
+@keyframes flash-down {
+  0%,
+  50% {
+    color: var(--color-error);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
+.price-flash-up {
+  animation: flash-up 2s ease-out forwards;
+}
+
+.price-flash-down {
+  animation: flash-down 2s ease-out forwards;
+}
