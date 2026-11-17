@@ -39,7 +39,8 @@ export interface IFuturesItem {
 
 const API_BASE_URL = 'https://tpp.testbug.cc'
 const groupsUrl = `${API_BASE_URL}/api/groups`
-const cgBaseUrl = `${API_BASE_URL}/api/v3`
+const cgBaseUrl = 'https://api.coingecko.com/api/v3'
+const binanceBaseUrl = 'https://fapi.binance.com/fapi/v1'
 
 export const groupApi = {
   getAll(): Promise<IGroup[]> {
@@ -73,7 +74,7 @@ export const binanceApi = {
     losers: IFuturesItem[]
     updatedAt?: number
   }> {
-    const data = await api.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json<
+    const data = await api.get(`${binanceBaseUrl}/ticker/24hr`).json<
       Array<{
         symbol: string
         priceChangePercent: string

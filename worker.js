@@ -54,29 +54,6 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS })
     }
 
-    // Proxy /api/v3/* to CoinGecko (GET only, with cf cache)
-    if (pathname.startsWith('/api/v3/') && method === 'GET') {
-      const url = new URL(request.url)
-      const targetUrl = 'https://api.coingecko.com' + url.pathname + url.search
-      const origin = await fetch(targetUrl, {
-        headers: {
-          Accept: 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; CloudflareWorker/1.0)'
-        },
-        cf: {
-          cacheEverything: true,
-          cacheKey: targetUrl,
-          cacheTtlByStatus: { '200-299': 60, '400-499': 0, '500-599': 0 }
-        }
-      })
-      const headers = new Headers(origin.headers)
-      Object.entries(CORS_HEADERS).forEach(([k, v]) => headers.set(k, v))
-      return new Response(origin.body, {
-        status: origin.status,
-        headers
-      })
-    }
-
     return new Response('Not Found.', { status: 404 })
   }
 }
