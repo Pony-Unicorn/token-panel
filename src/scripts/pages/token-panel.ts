@@ -73,7 +73,41 @@ export const binanceApi = {
     losers: IFuturesItem[]
     updatedAt?: number
   }> {
-    return api.get(`${API_BASE_URL}/api/futures/summary`).json()
+    const data = await api.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json<
+      Array<{
+        symbol: string
+        priceChangePercent: string
+        lastPrice: string
+        quoteVolume?: string
+      }>
+    >()
+
+    const usdt = data
+      .filter((t) => t.symbol && t.symbol.endsWith('USDT'))
+      .map((t) => ({
+        symbol: t.symbol,
+        change: parseFloat(t.priceChangePercent),
+        price: parseFloat(t.lastPrice),
+        quoteVolume: parseFloat(t.quoteVolume || '0')
+      }))
+      .filter(
+        (t) =>
+          !isNaN(t.change) &&
+          !isNaN(t.price) &&
+          t.price > 0 &&
+          (isNaN(t.quoteVolume) || t.quoteVolume > 10000)
+      )
+
+    usdt.sort((a, b) => b.change - a.change)
+
+    return {
+      gainers: usdt.slice(0, 10).map(({ symbol, change, price }) => ({ symbol, change, price })),
+      losers: usdt
+        .slice(-10)
+        .reverse()
+        .map(({ symbol, change, price }) => ({ symbol, change, price })),
+      updatedAt: Date.now()
+    }
   }
 }
 
