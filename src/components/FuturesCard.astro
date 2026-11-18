@@ -16,7 +16,16 @@ const deltaPrefix = isGainers ? '+' : ''
   <div class="card-body p-4 gap-3">
     <div class="flex items-center justify-between">
       <h2 class="font-bold text-base">{title}</h2>
-      <span x-show="futuresLoading" class="loading loading-spinner loading-xs" x-cloak></span>
+      <div class="flex items-center gap-1.5">
+        <span x-show="futuresLoading" class="loading loading-spinner loading-xs" x-cloak></span>
+        <span
+          x-show="futuresUpdatedAt"
+          class="text-xs text-base-content/40 tabular-nums"
+          x-cloak
+        >
+          更新于 <span x-text="formatTime(futuresUpdatedAt)"></span>
+        </span>
+      </div>
     </div>
 
     <!-- Error message -->
@@ -59,14 +68,6 @@ const deltaPrefix = isGainers ? '+' : ''
             ></span>
           </a>
         </template>
-      </div>
-    </template>
-
-    <!-- Updated timestamp -->
-    <template x-if="futuresUpdatedAt">
-      <div class="text-[10px] text-base-content/30 text-right">
-        更新于
-        <span x-text="formatTime(futuresUpdatedAt)"></span>
       </div>
     </template>
   </div>

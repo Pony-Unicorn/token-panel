@@ -67,54 +67,63 @@ import ConfirmModal from '../components/ConfirmModal.astro'
       <article class="card card-border bg-base-100 shadow-xs w-full sm:w-80 shrink-0">
         <div class="card-body p-4 gap-3">
           <!-- Board header -->
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <h2 class="font-bold text-base truncate" x-text="group.name"></h2>
-            <div class="flex gap-1 shrink-0" x-show="isEditMode" x-cloak>
-              <button
-                class="btn btn-ghost btn-xs"
-                @click="openEditGroup(group)"
-                title="重命名"
-                aria-label="重命名看板"
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span
+                x-show="!isEditMode && lastUpdated && group.coins.length > 0"
+                class="text-xs text-base-content/40 tabular-nums"
+                x-cloak
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="size-3.5"
-                  aria-hidden="true"
+                更新于 <span x-text="formatTime(lastUpdated)"></span>
+              </span>
+              <div class="flex gap-1 shrink-0" x-show="isEditMode" x-cloak>
+                <button
+                  class="btn btn-ghost btn-xs"
+                  @click="openEditGroup(group)"
+                  title="重命名"
+                  aria-label="重命名看板"
                 >
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                  <path d="m15 5 4 4"></path>
-                </svg>
-              </button>
-              <button
-                class="btn btn-ghost btn-xs text-error"
-                @click="openDeleteGroup(group.id)"
-                title="删除看板"
-                aria-label="删除看板"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="size-3.5"
-                  aria-hidden="true"
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="size-3.5"
+                    aria-hidden="true"
+                  >
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                    <path d="m15 5 4 4"></path>
+                  </svg>
+                </button>
+                <button
+                  class="btn btn-ghost btn-xs text-error"
+                  @click="openDeleteGroup(group.id)"
+                  title="删除看板"
+                  aria-label="删除看板"
                 >
-                  <path d="M3 6h18"></path>
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="size-3.5"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
