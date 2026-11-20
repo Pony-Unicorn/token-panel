@@ -146,15 +146,29 @@ export function tokenPanel() {
 
     async init() {
       await Promise.all([this.loadData(), this.refreshFutures()])
-
-      this._priceInterval = setInterval(() => this.refreshPrices(), 30 * 1000)
-      this._futuresInterval = setInterval(() => this.refreshFutures(), 5 * 60 * 1000)
+      this.startIntervals()
       ;(this as any).$cleanup?.(() => this.destroy())
     },
 
+    startIntervals() {
+      this.stopIntervals()
+      this._priceInterval = setInterval(() => this.refreshPrices(), 30 * 1000)
+      this._futuresInterval = setInterval(() => this.refreshFutures(), 5 * 60 * 1000)
+    },
+
+    stopIntervals() {
+      if (this._priceInterval) {
+        clearInterval(this._priceInterval)
+        this._priceInterval = null
+      }
+      if (this._futuresInterval) {
+        clearInterval(this._futuresInterval)
+        this._futuresInterval = null
+      }
+    },
+
     destroy() {
-      if (this._priceInterval) clearInterval(this._priceInterval)
-      if (this._futuresInterval) clearInterval(this._futuresInterval)
+      this.stopIntervals()
     },
 
     async loadData() {
@@ -235,6 +249,7 @@ export function tokenPanel() {
       this.isRefreshing = true
       try {
         await Promise.all([this.refreshPrices(), this.refreshFutures(), utils.sleep(400)])
+        this.startIntervals()
       } finally {
         this.isRefreshing = false
       }
