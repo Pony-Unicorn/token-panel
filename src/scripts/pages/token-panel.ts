@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { api } from '../lib/api'
 import toasts from '../components/toaster'
+import utils from '../lib/utils'
 
 export interface IGroup {
   id: string
@@ -123,6 +124,7 @@ export function tokenPanel() {
     loadError: '',
     priceError: '',
     isSaving: false,
+    isRefreshing: false,
 
     groupModal: { isEdit: false, id: null as string | null, name: '' },
     coinModal: {
@@ -225,6 +227,16 @@ export function tokenPanel() {
         this.futuresError = e?.message || '合约数据加载失败'
       } finally {
         this.futuresLoading = false
+      }
+    },
+
+    async refreshAll() {
+      if (this.isRefreshing) return
+      this.isRefreshing = true
+      try {
+        await Promise.all([this.refreshPrices(), this.refreshFutures(), utils.sleep(400)])
+      } finally {
+        this.isRefreshing = false
       }
     },
 
