@@ -14,18 +14,13 @@ const deltaPrefix = isGainers ? '+' : ''
 
 <article class="card card-border bg-base-100 shadow-xs w-full sm:w-80 shrink-0">
   <div class="card-body p-4 gap-3">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between min-h-7">
       <h2 class="font-bold text-base">{title}</h2>
-      <div class="flex items-center gap-1.5">
-        <span x-show="futuresLoading" class="loading loading-spinner loading-xs" x-cloak></span>
-        <span
-          x-show="futuresUpdatedAt"
-          class="text-xs text-base-content/40 tabular-nums"
-          x-cloak
-        >
-          更新于 <span x-text="formatTime(futuresUpdatedAt)"></span>
-        </span>
-      </div>
+      <span
+        x-show="futuresLoading"
+        class="loading loading-spinner loading-xs text-base-content/40"
+        x-cloak
+      ></span>
     </div>
 
     <!-- Error message -->
